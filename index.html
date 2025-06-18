@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lanches da Lúcia - Faça seu Pedido!</title>
+    <!-- Inclui Tailwind CSS para um estilo moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Novas fontes do Google Fonts: Changa One para títulos e Open Sans para o corpo -->
+    <link href="https://fonts.googleapis.com/css2?family=Changa+One&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Icones Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3/dist/phosphor-icons.js"></script>
+
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif; /* Fonte principal para o corpo */
+            background-color: #f3f4f6; /* Um fundo cinza claro */
+            color: #333;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Changa One', cursive; /* Fonte para títulos */
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        /* Estilos para cards de itens do menu */
+        .menu-item {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out;
+        }
+        .menu-item:hover {
+            transform: translateY(-5px);
+        }
+        /* Estilos para o botão flutuante do carrinho */
+        #cart-button {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background-color: #f59e0b; /* Laranja tema fast food */
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 9999px; /* Botão arredondado */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            z-index: 1000;
+        }
+        #cart-button:hover {
+            background-color: #d97706; /* Laranja mais escuro no hover */
+        }
+        /* Estilos para o modal (carrinho e personalização) */
+        .modal {
+            display: none; /* Escondido por padrão */
+            position: fixed;
+            z-index: 2000; /* Acima de tudo */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6); /* Fundo semi-transparente */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 90%;
+            width: 500px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+            max-height: 90vh; /* Limita a altura do modal */
+            overflow-y: auto; /* Adiciona scroll se o conteúdo for grande */
+        }
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #333;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilo para a mensagem de carregamento/sucesso */
+        #message-box {
+            position: fixed;
+            top: 1rem; /* Adjusted position */
+            left: 50%;
+            transform: translateX(-50%); /* Adjusted transform */
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 1.5rem 2.5rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: center;
+            display: none; /* Escondido por padrão */
+            z-index: 3000; /* Acima de todos os outros elementos */
+            animation: slideInFromTop 0.5s ease-out; /* Added animation */
+        }
+
+        @keyframes slideInFromTop {
+            from { opacity: 0; transform: translate(-50%, -50px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Estilos para o painel de administração */
+        .order-card, .admin-item-card {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Estilos para o modal de senha e nome */
+        #password-modal .modal-content,
+        #name-input-modal .modal-content,
+        #add-edit-item-modal .modal-content, /* New modal */
+        #add-edit-addon-modal .modal-content, /* New modal */
+        #contact-info-modal .modal-content /* New modal */
+        {
+            width: 350px; /* Menor para modais simples */
+            text-align: center;
+        }
+        /* Estilos para campos de input e o ícone de toggle */
+        #password-modal input[type="password"],
+        #name-input-modal input[type="text"],
+        #name-input-modal input[type="password"],
+        #name-input-modal textarea, /* Added textarea for address */
+        #password-modal input[type="text"],
+        #add-edit-item-modal input, #add-edit-item-modal textarea, /* New input styles */
+        #add-edit-addon-modal input, /* New input styles */
+        #admin-contact-phone, #admin-contact-email, #admin-contact-hours /* New admin contact inputs */
+        {
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            width: 100%;
+            box-sizing: border-box; /* Garante que o padding não aumente a largura */
+            padding-right: 2.5rem; /* Space for the icon */
+        }
+        .password-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .password-toggle-button {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            color: #6b7280; /* Gray-500 */
+        }
+        .password-toggle-button:hover {
+            color: #4b5563; /* Gray-700 */
+        }
+
+        #password-modal button,
+        #name-input-modal button,
+        #add-edit-item-modal button, /* New button styles */
+        #add-edit-addon-modal button, /* New button styles */
+        #contact-info-modal button, /* New button styles */
+        #save-contact-info-button /* New contact info save button */
+        {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #password-modal button:hover,
+        #name-input-modal button:hover,
+        #add-edit-item-modal button:hover, /* New button styles */
+        #add-edit-addon-modal button:hover, /* New button styles */
+        #contact-info-modal button:hover, /* New button styles */
+        #save-contact-info-button:hover /* New contact info save button */
+        {
+            background-color: #45a049; /* Verde mais escuro */
+        }
+        #password-error-message,
+        #name-error-message,
+        #owner-login-error-message,
+        .modal-error-message, /* New error message style */
+        #contact-info-error-message /* New contact info error message */
+        {
+            color: #dc2626; /* Vermelho */
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* Estilo para o status do pedido */
+        .status-pill {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px; /* Pill shape */
+            font-weight: bold;
+            font-size: 0.875rem; /* text-sm */
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+        .status-pendente { background-color: #fcd34d; color: #92400e; } /* yellow-300 / yellow-900 */
+        .status-preparando { background-color: #60a5fa; color: #1e40af; } /* blue-400 / blue-800 */
+        .status-pronto { background-color: #34d399; color: #065f46; } /* green-400 / green-800 */
+        .status-entregue { background-color: #d1d5db; color: #4b5563; } /* gray-300 / gray-700 */
+        .status-cancelado { background-color: #fca5a5; color: #7f1d1d; } /* red-300 / red-900 */
+
+
+        /* Estilos para abas do admin */
+        .admin-tab-button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #d1d5db; /* gray-300 */
+            color: #4b5563; /* gray-700 */
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .admin-tab-button.active {
+            background-color: #ef4444; /* red-500 */
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .admin-tab-button:not(.active):hover {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="message-box"></div>
+
+    <header class="bg-red-600 text-white p-6 shadow-md rounded-b-xl flex flex-col md:flex-row items-center justify-between">
+        <div class="container flex flex-col md:flex-row items-center justify-between">
+            <!-- LOGO: Substituído pelo URL da imagem fornecida -->
+            <img src="https://firebasestorage.googleapis.com/v0/b/chat-app-gemini.appspot.com/o/e56598c4-8025-4122-83b6-993d052d0a0b%2FCapturar.PNG?alt=media&token=162629e4-44ed-44b4-a212-09f029094e9f" alt="Lanches da Lúcia Logo" class="h-24 mb-4 md:mb-0">
+            <h1 class="text-4xl font-bold mb-2 md:mb-0 hidden">LANCHES DA LÚCIA</h1> <!-- Oculta o texto se a logo já tiver o nome -->
+            <p class="text-xl">Seu sabor do Pantanal!</p>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal do Cliente -->
+    <div id="client-view" class="hidden"> <!-- Hidden by default until name is entered -->
+        <main class="container my-8">
+            <section id="menu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Os itens do menu serão carregados aqui pelo JavaScript -->
+                <h2 class="col-span-full text-2xl font-semibold text-center mb-6">Nosso Cardápio</h2>
+            </section>
+            
+            <section id="customer-active-orders" class="mt-12">
+                <h2 class="text-2xl font-semibold text-center mb-6 text-blue-700">Seus Pedidos Ativos</h2>
+                <div id="customer-orders-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p id="no-customer-orders-message" class="text-gray-500 text-center col-span-full">Nenhum pedido ativo no momento.</p>
+                </div>
+            </section>
+
+            <!-- NOVO: Seção de Histórico de Pedidos -->
+            <section id="customer-order-history" class="mt-12">
+                <h2 class="text-2xl font-semibold text-center mb-6 text-purple-700">Histórico de Pedidos</h2>
+                <div id="customer-history-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p id="no-customer-history-message" class="text-gray-500 text-center col-span-full">Nenhum pedido no histórico.</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Botão flutuante para ver o carrinho -->
+        <button id="cart-button">
+            <i class="ph-fill ph-shopping-cart text-2xl"></i>
+            <span id="cart-item-count">0</span> Itens
+        </button>
+
+        <!-- Modal do Carrinho -->
+        <div id="cart-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-cart-modal">&times;</span>
+                <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Seu Carrinho</h2>
+                <div id="cart-items" class="max-h-60 overflow-y-auto pr-2">
+                    <!-- Itens do carrinho serão inseridos aqui -->
+                    <p id="empty-cart-message" class="text-gray-500 text-center">Seu carrinho está vazio.</p>
+                </div>
+
+                <!-- Seção de Pagamento -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold mb-3">Forma de Pagamento:</h3>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="paymentMethod" value="dinheiro" class="form-radio text-blue-600 h-5 w-5" checked>
+                            <span class="ml-2 text-lg">Dinheiro</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="paymentMethod" value="pix" class="form-radio text-blue-600 h-5 w-5">
+                            <span class="ml-2 text-lg">Pix</span>
+                        </label>
+                    </div>
+
+                    <div id="pix-info" class="bg-gray-100 p-4 rounded-lg hidden">
+                        <p class="text-lg font-semibold mb-2">Chave Pix:</p>
+                        <p class="text-2xl font-bold text-green-700 break-words" id="pix-key-display">67 999697211</p>
+                        <p class="text-sm text-gray-600 mt-2">Envie o comprovante para este número (via WhatsApp) ou aqui no site.</p>
+                        <div class="mt-4">
+                            <label for="pix-receipt-upload" class="block text-gray-700 text-sm font-bold mb-2">Anexar Comprovante (opcional):</label>
+                            <input type="file" id="pix-receipt-upload" accept="image/*" class="w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text:sm file:font-semibold
+                                file:bg-blue-50 file:text-blue-700
+                                hover:file:bg-blue-100"/>
+                            <p id="receipt-upload-status" class="text-sm text-gray-600 mt-2 hidden"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nova Seção de Localização -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold mb-3">Onde você está?</h3>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="locationMethod" value="delivery" class="form-radio text-purple-600 h-5 w-5" id="radio-delivery" checked>
+                            <span class="ml-2 text-lg">Entrega</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="locationMethod" value="pickup" class="form-radio text-purple-600 h-5 w-5" id="radio-pickup">
+                            <span class="ml-2 text-lg">Retirada na Loja</span>
+                        </label>
+                    </div>
+
+                    <div id="location-notes-info" class="bg-gray-100 p-4 rounded-lg"> <!-- Removed hidden, will be managed by JS -->
+                        <label for="location-notes-input" class="block text-gray-700 text-sm font-bold mb-2" id="location-notes-label">Detalhes do Local:</label>
+                        <textarea id="location-notes-input" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" rows="2" placeholder="Ex: Rua X, nº Y, apto Z, referência"></textarea>
+                    </div>
+                </div>
+
+
+                <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                    <p class="text-xl font-bold">Total: <span id="cart-total">R$ 0,00</span></p>
+                    <button id="checkout-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+                        <i class="ph-fill ph-check-circle mr-2"></i>Finalizar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Detalhes e Complementos do Lanche -->
+        <div id="customize-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-customize-modal">&times;</span>
+                <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Detalhes e Complementos</h2>
+                <div id="customize-item-details" class="mb-4 text-center">
+                    <img id="customize-item-image" src="" alt="Lanche" class="w-full h-40 object-cover rounded-lg mb-3 shadow-sm mx-auto">
+                    <h3 id="customize-item-name" class="text-2xl font-bold text-red-700"></h3>
+                    <p id="customize-item-description" class="text-gray-600 text-sm mb-2"></p>
+                    
+                    <!-- Adicionado controle de quantidade para o item principal -->
+                    <div class="flex items-center justify-center space-x-2 mb-4">
+                        <button type="button" id="decrease-main-item-qty" class="bg-red-200 text-red-700 px-3 py-1 rounded-full hover:bg-red-300 transition-colors text-lg font-bold">
+                            <i class="ph-fill ph-minus"></i>
+                        </button>
+                        <input type="number" id="customize-item-qty" value="1" min="1" class="w-16 text-center border rounded-md text-gray-800 font-semibold text-lg py-1">
+                        <button type="button" id="increase-main-item-qty" class="bg-green-200 text-green-700 px-3 py-1 rounded-full hover:bg-green-300 transition-colors text-lg font-bold">
+                            <i class="ph-fill ph-plus"></i>
+                        </button>
+                    </div>
+
+                    <p class="text-xl font-extrabold text-green-600">Preço Base: <span id="customize-item-base-price">R$ 0,00</span></p>
+                </div>
+
+                <div class="mb-6">
+                    <h4 class="text-xl font-semibold mb-3">Selecione seus Complementos:</h4>
+                    <!-- Alterado para uma coluna tipo lista com espaçamento melhorado -->
+                    <div id="customize-addons" class="flex flex-col gap-2">
+                        <!-- Complementos serão carregados aqui -->
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h4 class="text-xl font-semibold mb-3">Observações (opcional):</h4>
+                    <textarea id="customize-notes" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Ex: Sem picles, molho à parte, etc."></textarea>
+                </div>
+
+                <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                    <p class="text-2xl font-bold">Total: <span id="customize-current-total">R$ 0,00</span></p>
+                    <button id="add-to-cart-customized-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+                        <i class="ph-fill ph-check-circle mr-2"></i>Adicionar ao Carrinho
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div> <!-- Fim do client-view -->
+
+    <!-- Seção do Painel de Administração -->
+    <div id="admin-view" class="hidden">
+        <main class="container my-8">
+            <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Painel do Proprietário</h2>
+
+            <!-- Abas de Navegação do Admin -->
+            <div class="flex justify-center space-x-4 mb-8">
+                <button id="tab-order-management" class="admin-tab-button active">
+                    <i class="ph-fill ph-clipboard-text mr-2"></i>Pedidos Recebidos
+                </button>
+                <button id="tab-menu-management" class="admin-tab-button">
+                    <i class="ph-fill ph-hamburger mr-2"></i>Gerenciar Lanches
+                </button>
+                <button id="tab-finance-management" class="admin-tab-button">
+                    <i class="ph-fill ph-currency-dollar mr-2"></i>Financeiro
+                </button>
+                <button id="tab-contact-info-management" class="admin-tab-button">
+                    <i class="ph-fill ph-info mr-2"></i>Informações da Loja
+                </button>
+            </div>
+
+            <!-- Conteúdo da Aba: Pedidos Recebidos -->
+            <div id="admin-orders-tab-content" class="admin-tab-content"> <!-- This is now the default active tab -->
+                <section id="admin-orders-section">
+                    <h3 class="text-2xl font-semibold mb-4 text-red-700">Pedidos Recebidos</h3>
+                    <div id="orders-list">
+                        <!-- Pedidos serão carregados aqui -->
+                        <p id="no-orders-message" class="text-gray-500 text-center text-lg hidden">Nenhum pedido no momento.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Conteúdo da Aba: Gerenciar Lanches -->
+            <div id="admin-menu-management-tab-content" class="admin-tab-content hidden">
+                <section id="admin-menu-management-section" class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-700">Gerenciar Lanches</h3>
+                    <button id="add-new-menu-item-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full mb-4">
+                        <i class="ph-fill ph-plus-circle mr-2"></i>Adicionar Novo Lanche
+                    </button>
+                    <div id="admin-menu-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Lanches do admin serão carregados aqui -->
+                        <p id="no-menu-items-message" class="text-gray-500 text-center col-span-full hidden">Nenhum lanche cadastrado.</p>
+                    </div>
+                </section>
+
+                <section id="admin-addons-management-section" class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-700">Gerenciar Complementos</h3>
+                    <button id="add-new-addon-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full mb-4">
+                        <i class="ph-fill ph-plus-circle mr-2"></i>Adicionar Novo Complemento
+                    </button>
+                    <div id="admin-addons-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Complementos do admin serão carregados aqui -->
+                        <p id="no-addons-message" class="text-gray-500 text-center col-span-full hidden">Nenhum complemento cadastrado.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Conteúdo da Aba: Financeiro -->
+            <div id="admin-finance-tab-content" class="admin-tab-content hidden">
+                <section id="admin-finance-section">
+                    <h3 class="text-2xl font-semibold mb-4 text-green-700">Resumo Financeiro do Dia</h3>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <p class="text-lg mb-3">
+                            <i class="ph-fill ph-package text-blue-600 mr-2"></i>
+                            <span class="font-bold">Lanches Vendidos Hoje:</span> <span id="total-snacks-sold" class="text-xl font-bold text-blue-800">0</span>
+                        </p>
+                        <p class="text-lg">
+                            <i class="ph-fill ph-wallet text-green-600 mr-2"></i>
+                            <span class="font-bold">Total de Vendas Hoje:</span> <span id="daily-revenue" class="text-xl font-bold text-green-800">R$ 0,00</span>
+                        </p>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-4">Os dados são atualizados em tempo real com base nos pedidos do dia corrente.</p>
+                </section>
+            </div>
+
+            <!-- NOVO: Conteúdo da Aba: Informações da Loja -->
+            <div id="admin-contact-tab-content" class="admin-tab-content hidden">
+                <section id="admin-contact-info-section" class="mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-700">Informações da Loja</h3>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <div class="mb-4">
+                            <label for="admin-contact-phone" class="block text-gray-700 text-sm font-bold mb-2">Telefone / WhatsApp:</label>
+                            <input type="text" id="admin-contact-phone" placeholder="Ex: (67) 99999-9999" class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label for="admin-contact-email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                            <input type="email" id="admin-contact-email" placeholder="Ex: contato@exemplo.com" class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="mb-4">
+                            <label for="admin-contact-hours" class="block text-gray-700 text-sm font-bold mb-2">Horário de Atendimento:</label>
+                            <textarea id="admin-contact-hours" placeholder="Ex: Segunda a Sábado: 18:00 - 23:00" class="w-full p-2 border border-gray-300 rounded-lg" rows="3"></textarea>
+                        </div>
+                        <p id="contact-info-error-message" class="modal-error-message"></p>
+                        <button id="save-contact-info-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-4">
+                            <i class="ph-fill ph-floppy-disk mr-2"></i>Salvar Informações
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+    </div> <!-- Fim do admin-view -->
+
+    <!-- Modal de Senha para Acesso Admin (Antigo, agora integrado ao name-input-modal) -->
+    <div id="password-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="close-password-modal">&times;</span>
+            <h3 class="text-2xl font-bold mb-4 text-red-600">Acesso Restrito</h3>
+            <p class="text-gray-700 mb-4">Insira a senha para acessar o painel de administração.</p>
+            <div class="password-input-wrapper">
+                <input type="password" id="admin-password-input" placeholder="Digite a senha" class="mb-2">
+                <button type="button" class="password-toggle-button" id="toggle-admin-password">
+                    <i class="ph-fill ph-eye-slash"></i>
+                </button>
+            </div>
+            <p id="password-error-message" class="hidden">Senha incorreta!</p>
+            <button id="submit-password-button" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full">Acessar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Solicitação de Nome - AGORA COM ENDEREÇO E OPÇÃO DE ACESSO DO PROPRIETÁRIO -->
+    <div id="name-input-modal" class="modal block"> <!-- Display block initially -->
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-4 text-red-600">Bem-vindo(a) à Lanches da Lúcia!</h3>
+            <p class="text-gray-700 mb-4">Por favor, digite seu nome e endereço para continuar como cliente:</p>
+            <input type="text" id="customer-name-input" placeholder="Seu nome" class="mb-2">
+            <textarea id="customer-address-input" placeholder="Seu endereço (Rua, Número, Bairro, Cidade)" class="mb-2" rows="2"></textarea>
+            <p id="name-error-message" class="hidden">Por favor, digite seu nome e endereço.</p>
+            <button id="submit-name-button" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-full opacity-50 cursor-not-allowed" disabled>Continuar como Cliente</button>
+
+            <div class="mt-8 pt-4 border-t border-gray-200">
+                <p class="text-gray-700 mb-4">Ou, se você é o proprietário, insira a senha:</p>
+                <div class="password-input-wrapper">
+                    <input type="password" id="owner-password-input" placeholder="Senha do Proprietário" class="mb-2">
+                    <button type="button" class="password-toggle-button" id="toggle-owner-password">
+                        <i class="ph-fill ph-eye-slash"></i>
+                    </button>
+                </div>
+                <p id="owner-login-error-message" class="hidden">Senha do proprietário incorreta!</p>
+                <button id="owner-login-button" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-6 rounded-full">Entrar como Proprietário</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar/Editar Lanche -->
+    <div id="add-edit-item-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-add-edit-item-modal">&times;</span>
+            <h2 id="add-edit-item-title" class="text-3xl font-bold mb-6 text-center text-red-600">Adicionar Novo Lanche</h2>
+            <input type="hidden" id="edit-item-id">
+            <div class="mb-4">
+                <label for="item-name" class="block text-gray-700 text-sm font-bold mb-2">Nome do Lanche:</label>
+                <input type="text" id="item-name" class="w-full p-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label for="item-description" class="block text-gray-700 text-sm font-bold mb-2">Descrição:</label>
+                <textarea id="item-description" class="w-full p-2 border border-gray-300 rounded-lg" rows="3"></textarea>
+            </div>
+            <div class="mb-4">
+                <label for="item-price" class="block text-gray-700 text-sm font-bold mb-2">Preço (R$):</label>
+                <input type="number" id="item-price" step="0.01" class="w-full p-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label for="item-image-url" class="block text-gray-700 text-sm font-bold mb-2">URL da Imagem:</label>
+                <input type="text" id="item-image-url" placeholder="Ex: https://example.com/lanche.jpg" class="w-full p-2 border border-gray-300 rounded-lg">
+                <p class="text-xs text-gray-500 mt-1">Use uma URL de imagem online (placeholder se vazia).</p>
+            </div>
+            <p id="item-modal-error-message" class="modal-error-message"></p>
+            <button id="save-item-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-4">Salvar Lanche</button>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar/Editar Complemento -->
+    <div id="add-edit-addon-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-add-edit-addon-modal">&times;</span>
+            <h2 id="add-edit-addon-title" class="text-3xl font-bold mb-6 text-center text-red-600">Adicionar Novo Complemento</h2>
+            <input type="hidden" id="edit-addon-id">
+            <div class="mb-4">
+                <label for="addon-name" class="block text-gray-700 text-sm font-bold mb-2">Nome do Complemento:</label>
+                <input type="text" id="addon-name" class="w-full p-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label for="addon-price" class="block text-gray-700 text-sm font-bold mb-2">Preço (R$):</label>
+                <input type="number" id="addon-price" step="0.01" class="w-full p-2 border border-gray-300 rounded-lg">
+            </div>
+            <p id="addon-modal-error-message" class="modal-error-message"></p>
+            <button id="save-addon-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mt-4">Salvar Complemento</button>
+        </div>
+    </div>
+
+    <!-- Modal de Informações de Contato -->
+    <div id="contact-info-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="close-contact-modal">&times;</span>
+            <h2 class="text-3xl font-bold mb-6 text-center text-red-600">Fale Conosco!</h2>
+            <div class="text-center text-lg">
+                <p class="mb-4"><i class="ph-fill ph-phone mr-2 text-green-600"></i>Telefone/WhatsApp: <span class="font-semibold" id="display-contact-phone">(67) 99969-7211</span></p>
+                <p class="mb-4"><i class="ph-fill ph-envelope-simple mr-2 text-blue-600"></i>Email: <span class="font-semibold" id="display-contact-email">contato@lanchesdalucia.com</span></p>
+                <p class="text-gray-600 text-sm mt-6">Horário de Atendimento:</p>
+                <p class="text-gray-700" id="display-contact-hours">Segunda a Sábado: 18:00 - 23:00</p>
+            </div>
+        </div>
+    </div>
+
+
+    <footer class="bg-gray-800 text-white p-4 text-center mt-8 rounded-t-xl flex flex-wrap justify-center items-center gap-4">
+        <p>&copy; 2025 Lanches da Lúcia. Todos os direitos reservados.</p>
+        <!-- O botão de alternar visão agora só aparece depois de logado -->
+        <button id="toggle-view-button" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-full transition-colors hidden">
+            Alternar Visão
+        </button>
+        <button id="contact-info-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full transition-colors">
+            <i class="ph-fill ph-chat-centered-text mr-2"></i>Fale Conosco
+        </button>
+    </footer>
+
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, where, getDocs, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; // Adicionado 'doc' explicitamente
+
+        // Initial hardcoded data to populate Firestore if collections are empty
+        const initialMenuItems = [
+            // Imagem do X-SALADA agora usa a URL da imagem que você enviou!
+            { id: 'x-salada', name: 'X-SALADA', description: 'Alface, tomate, hambúrguer, presunto, mussarela.', price: 13.00, imageUrl: 'https://firebasestorage.googleapis.com/v0/b/chat-app-gemini.appspot.com/o/e56598c4-8025-4122-83b6-993d052d0a0b%2FCapturar.PNG?alt=media&token=162629e4-44ed-44b4-a212-09f029094e9f' },
+            { id: 'x-bacon', name: 'X-BACON', description: 'Alface, tomate, hambúrguer, presunto, mussarela, bacon.', price: 15.00, imageUrl: 'https://placehold.co/400x250/FACC15/7C2D12?text=X-BACON' },
+            { id: 'x-frango', name: 'X-FRANGO', description: 'Alface, tomate, filé de frango, presunto, mussarela.', price: 16.00, imageUrl: 'https://placehold.co/400x250/FACC15/7C2D12?text=X-FRANGO' },
+            { id: 'x-calabresa', name: 'X-CALABRESA', description: 'Alface, tomate, hambúrguer, presunto, mussarela, calabresa.', price: 15.00, imageUrl: 'https://placehold.co/400x250/FACC15/7C2D12?text=X-CALABRESA' },
+            { id: 'x-americano', name: 'X-AMERICANO', description: 'Pão, ovo, alface, presunto, mussarela.', price: 10.00, imageUrl: 'https://placehold.co/400x250/FACC15/7C2D12?text=X-AMERICANO' },
+            { id: 'x-bagunca', name: 'X-BAGUNÇA', description: 'Alface, tomate, hambúrguer, presunto, mussarela, bacon, calabresa, ovo, salsicha, batata palha, milho.', price: 20.00, imageUrl: 'https://placehold.co/400x250/FACC15/7C2D12?text=X-BAGUNCA' },
+            { id: 'x-egg', name: 'X-EGG', description: 'Alface, tomate, ovo, hambúrguer, presunto, mussarela.', price: 15.00, imageUrl: 'https://placehold.co/400x250/FACC15/7C2D12?text=X-EGG' },
+            { id: 'cachorro-quente', name: 'CACHORRO QUENTE', description: 'Salsicha, milho, batata, queijo, maionese, ketchup.', price: 10.00, imageUrl: 'https://placehold.co/400x250/FACC15/7C2D12?text=CACHORRO+QUENTE' }
+        ];
+
+        const initialAddons = [
+            { id: 'bacon', name: 'BACON', price: 2.00 },
+            { id: 'ovo', name: 'OVO', price: 1.00 },
+            { id: 'calabresa', name: 'CALABRESA', price: 2.00 },
+            { id: 'salsicha', name: 'SALSICHA', price: 1.00 },
+            { id: 'batata-palha', name: 'BATATA PALHA', price: 1.00 },
+            { id: 'hamburguer-extra', name: 'HAMBURGUER', price: 4.00 },
+            { id: 'catupiry', name: 'CATUPIRY', price: 2.00 },
+            { id: 'cheddar', name: 'CHEDDAR', price: 2.00 }
+        ];
+
+        // Categorias de complementos para renderização diferenciada
+        const quantityAddons = ['bacon', 'ovo', 'calabresa', 'salsicha', 'hamburguer-extra'];
+        const checkboxAddons = ['catupiry', 'cheddar', 'batata-palha'];
+
+        // Variáveis globais fornecidas pelo ambiente Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
+
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let customerName = null;
+        let customerAddress = null; // New: to store customer's saved address
+        let isAuthReady = false;
+        let pixReceiptBase64 = null;
+        let currentView = 'customer'; // 'customer' or 'admin'
+        let currentAdminTab = 'orders'; // 'orders', 'menu', 'finance', 'contact' - Set 'orders' as default
+
+        // Global data caches (will be populated from Firestore)
+        let menuItemsData = [];
+        let globalAddonsData = [];
+        let customerActiveOrders = []; // New: To store active orders for the current customer
+        let customerOrderHistory = []; // NEW: To store historical orders for the current customer
+        let allAdminOrders = []; // To store all orders for admin view (including finance)
+        let contactInfoData = {}; // New: To store contact information
+
+
+        // Inicializa o Firebase
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Listener para o estado de autenticação
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Usuário autenticado:", userId);
+                } else {
+                    console.log("Nenhum usuário logado, tentando autenticação anônima...");
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                        userId = auth.currentUser.uid;
+                        console.log("Autenticado anonimamente com sucesso:", userId);
+                    } catch (error) {
+                        console.error("Erro na autenticação:", error);
+                        showMessage("Erro de autenticação! Tente novamente.", true);
+                    }
+                }
+                isAuthReady = true; // Marca que a autenticação está pronta
+                // Agora que o usuário está pronto, podemos carregar os dados
+                setupDataListeners(); // Setup listeners for menu, addons, and orders
+            });
+
+        } catch (error) {
+            console.error("Erro ao inicializar Firebase:", error);
+            showMessage("Erro ao iniciar o aplicativo. Por favor, recarregue.", true);
+        }
+
+        // Variáveis do carrinho
+        let cart = [];
+        let currentCustomizingItem = null;
+
+        // Elementos do DOM do cliente
+        const clientView = document.getElementById('client-view');
+        const menuSection = document.getElementById('menu');
+        const cartButton = document.getElementById('cart-button');
+        const cartItemCountSpan = document.getElementById('cart-item-count');
+        const cartModal = document.getElementById('cart-modal');
+        const closeCartModalButton = document.getElementById('close-cart-modal');
+        const cartItemsDiv = document.getElementById('cart-items');
+        const cartTotalSpan = document.getElementById('cart-total');
+        const checkoutButton = document.getElementById('checkout-button');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const messageBox = document.getElementById('message-box');
+        const customerOrdersListDiv = document.getElementById('customer-orders-list'); // New: Customer's active orders list
+        const noCustomerOrdersMessage = document.getElementById('no-customer-orders-message'); // New
+        const customerHistoryListDiv = document.getElementById('customer-history-list'); // NEW: Customer's order history list
+        const noCustomerHistoryMessage = document.getElementById('no-customer-history-message'); // NEW
+
+        // Elementos do DOM do modal de personalização
+        const customizeModal = document.getElementById('customize-modal');
+        const closeCustomizeModalButton = document.getElementById('close-customize-modal');
+        const customizeItemImage = document.getElementById('customize-item-image');
+        const customizeItemName = document.getElementById('customize-item-name');
+        const customizeItemDescription = document.getElementById('customize-item-description');
+        const customizeItemBasePrice = document.getElementById('customize-item-base-price');
+        const customizeAddonsDiv = document.getElementById('customize-addons');
+        const customizeNotes = document.getElementById('customize-notes');
+        const customizeCurrentTotalSpan = document.getElementById('customize-current-total');
+        const addToCartCustomizedButton = document.getElementById('add-to-cart-customized-button');
+
+        // New elements for main item quantity control
+        const decreaseMainItemQtyButton = document.getElementById('decrease-main-item-qty');
+        const increaseMainItemQtyButton = document.getElementById('increase-main-item-qty');
+        const customizeItemQtyInput = document.getElementById('customize-item-qty');
+
+        // Elementos do DOM para pagamento
+        const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+        const pixInfoDiv = document.getElementById('pix-info');
+        const pixKeyDisplay = document.getElementById('pix-key-display');
+        const pixReceiptUploadInput = document.getElementById('pix-receipt-upload');
+        const receiptUploadStatus = document.getElementById('receipt-upload-status');
+
+        // Elementos do DOM para localização
+        const locationMethodRadios = document.querySelectorAll('input[name="locationMethod"]');
+        const radioDelivery = document.getElementById('radio-delivery'); // NEW
+        const radioPickup = document.getElementById('radio-pickup'); // NEW
+        const locationNotesInfoDiv = document.getElementById('location-notes-info');
+        const locationNotesInput = document.getElementById('location-notes-input');
+        const locationNotesLabel = document.getElementById('location-notes-label'); // NEW
+
+
+        // Elementos do DOM do painel de administração
+        const adminView = document.getElementById('admin-view');
+        const ordersListDiv = document.getElementById('orders-list');
+        const noOrdersMessage = document.getElementById('no-orders-message');
+        const toggleViewButton = document.getElementById('toggle-view-button');
+
+        // Elementos do DOM do modal de senha (para alternar visão)
+        const passwordModal = document.getElementById('password-modal');
+        const closePasswordModalButton = document.getElementById('close-password-modal');
+        const adminPasswordInput = document.getElementById('admin-password-input');
+        const submitPasswordButton = document.getElementById('submit-password-button');
+        const passwordErrorMessage = document.getElementById('password-error-message');
+        const toggleAdminPasswordButton = document.getElementById('toggle-admin-password');
+
+        // Elementos do DOM do modal de nome (e login do proprietário)
+        const nameInputModal = document.getElementById('name-input-modal');
+        const customerNameInput = document.getElementById('customer-name-input');
+        const customerAddressInput = document.getElementById('customer-address-input'); // New: Address input
+        const submitNameButton = document.getElementById('submit-name-button'); 
+        const nameErrorMessage = document.getElementById('name-error-message');
+        const ownerPasswordInput = document.getElementById('owner-password-input');
+        const ownerLoginButton = document.getElementById('owner-login-button');
+        const ownerLoginErrorMessage = document.getElementById('owner-login-error-message');
+        const toggleOwnerPasswordButton = document.getElementById('toggle-owner-password');
+
+        // Elementos para Gerenciamento de Cardápio (Admin)
+        const addEditItemModal = document.getElementById('add-edit-item-modal');
+        const closeAddEditItemModalButton = document.getElementById('close-add-edit-item-modal');
+        const addEditItemTitle = document.getElementById('add-edit-item-title');
+        const editItemId = document.getElementById('edit-item-id');
+        const itemNameInput = document.getElementById('item-name');
+        const itemDescriptionInput = document.getElementById('item-description');
+        const itemPriceInput = document.getElementById('item-price');
+        const itemImageUrlInput = document.getElementById('item-image-url');
+        const itemModalErrorMessage = document.getElementById('item-modal-error-message');
+        const saveItemButton = document.getElementById('save-item-button');
+        const addMenuButton = document.getElementById('add-new-menu-item-button');
+        const adminMenuListDiv = document.getElementById('admin-menu-list');
+        const noMenuItemsMessage = document.getElementById('no-menu-items-message');
+
+        // Elementos para Gerenciamento de Complementos (Admin)
+        const addEditAddonModal = document.getElementById('add-edit-addon-modal');
+        const closeAddEditAddonModalButton = document.getElementById('close-add-edit-addon-modal');
+        const addEditAddonTitle = document.getElementById('add-edit-addon-title');
+        const editAddonId = document.getElementById('edit-addon-id');
+        const addonNameInput = document.getElementById('addon-name');
+        const addonPriceInput = document.getElementById('addon-price');
+        const addonModalErrorMessage = document.getElementById('addon-modal-error-message');
+        const saveAddonButton = document.getElementById('save-addon-button');
+        const addAddonButton = document.getElementById('add-new-addon-button');
+        const adminAddonsListDiv = document.getElementById('admin-addons-list');
+        const noAddonsMessage = document.getElementById('no-addons-message');
+
+        // Elementos para Abas do Admin
+        const tabMenuManagementButton = document.getElementById('tab-menu-management');
+        const tabOrderManagementButton = document.getElementById('tab-order-management');
+        const tabFinanceManagementButton = document.getElementById('tab-finance-management');
+        const tabContactInfoManagementButton = document.getElementById('tab-contact-info-management'); // New
+
+        const adminMenuManagementTabContent = document.getElementById('admin-menu-management-tab-content');
+        const adminOrdersTabContent = document.getElementById('admin-orders-tab-content');
+        const adminFinanceTabContent = document.getElementById('admin-finance-tab-content');
+        const adminContactTabContent = document.getElementById('admin-contact-tab-content'); // New
+
+        // Elementos Financeiros
+        const totalSnacksSoldSpan = document.getElementById('total-snacks-sold');
+        const dailyRevenueSpan = document.getElementById('daily-revenue');
+
+        // Elementos Fale Conosco
+        const contactInfoButton = document.getElementById('contact-info-button');
+        const contactInfoModal = document.getElementById('contact-info-modal');
+        const closeContactModalButton = document.getElementById('close-contact-modal');
+        const displayContactPhone = document.getElementById('display-contact-phone');
+        const displayContactEmail = document.getElementById('display-contact-email');
+        const displayContactHours = document.getElementById('display-contact-hours');
+
+        // Elementos de Informações de Contato (Admin)
+        const adminContactPhoneInput = document.getElementById('admin-contact-phone');
+        const adminContactEmailInput = document.getElementById('admin-contact-email');
+        const adminContactHoursInput = document.getElementById('admin-contact-hours');
+        const saveContactInfoButton = document.getElementById('save-contact-info-button');
+        const contactInfoErrorMessage = document.getElementById('contact-info-error-message');
+
+
+        // Chave Pix da Lúcia
+        const PIX_KEY = "67999697211"; // This could also be configurable via admin panel later
+
+        // SENHA DE ADMIN (PARA FINS DE TESTE - NÃO USAR EM PRODUÇÃO REAL)
+        const ADMIN_PASSWORD = "admin123";
+
+
+        // --- Firebase Data Listeners and Initial Population ---
+        async function setupDataListeners() {
+            if (!db || !isAuthReady) {
+                console.warn("Firestore ou autenticação não estão prontos para configurar listeners de dados.");
+                return;
+            }
+
+            // Listener para o perfil do usuário (privado)
+            if (userId) {
+                const userProfileDocRef = doc(db, `artifacts/${appId}/users/${userId}/profile/userProfile`);
+                onSnapshot(userProfileDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const profileData = docSnap.data();
+                        customerName = profileData.name || null;
+                        customerAddress = profileData.address || null;
+                        console.log("Perfil do usuário carregado:", customerName, customerAddress);
+
+                        // Preenche os inputs do modal de nome se ele estiver visível
+                        if (nameInputModal.style.display === 'block') {
+                            customerNameInput.value = customerName || '';
+                            customerAddressInput.value = customerAddress || '';
+                            // Habilita o botão se já tiver nome e endereço salvo
+                            if (customerName && customerAddress) {
+                                submitNameButton.disabled = false;
+                                submitNameButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                            }
+                        }
+                    } else {
+                        console.log("Nenhum perfil de usuário encontrado.");
+                        customerName = null;
+                        customerAddress = null;
+                    }
+                }, (error) => {
+                    console.error("Erro ao carregar perfil do usuário:", error);
+                });
+            }
+
+
+            // Listener para Itens do Menu
+            const menuItemsColRef = collection(db, `artifacts/${appId}/public/data/menuItems`);
+            onSnapshot(menuItemsColRef, async (snapshot) => {
+                const fetchedItems = [];
+                snapshot.forEach((docSnap) => {
+                    fetchedItems.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                menuItemsData = fetchedItems;
+                console.log("Itens do menu atualizados:", menuItemsData);
+                // Load menu items for client view only if the client view is currently active
+                if (clientView.classList.contains('hidden') === false) { 
+                    loadMenuItems();
+                }
+                // Also update admin menu list if in admin view and current tab is menu management
+                if (currentView === 'admin' && currentAdminTab === 'menu') {
+                    renderAdminMenuItems(menuItemsData);
+                }
+
+                // Initial population check (only if collection is empty)
+                if (fetchedItems.length === 0) {
+                    console.log("Coleção de itens do menu vazia, populando com dados iniciais...");
+                    for (const item of initialMenuItems) {
+                        // Use setDoc to set the document with the specified ID
+                        await setDoc(doc(db, `artifacts/${appId}/public/data/menuItems`, item.id), item);
+                    }
+                }
+            }, (error) => {
+                console.error("Erro ao obter itens do menu em tempo real:", error);
+                showMessage("Erro ao carregar cardápio.", true);
+            });
+
+            // Listener para Complementos
+            const addonsColRef = collection(db, `artifacts/${appId}/public/data/addons`);
+            onSnapshot(addonsColRef, async (snapshot) => {
+                const fetchedAddons = [];
+                snapshot.forEach((docSnap) => {
+                    fetchedAddons.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                globalAddonsData = fetchedAddons;
+                console.log("Complementos atualizados:", globalAddonsData);
+                // Also update admin addons list if in admin view and current tab is menu management
+                if (currentView === 'admin' && currentAdminTab === 'menu') {
+                    renderAdminAddons(globalAddonsData);
+                }
+
+                // Initial population check (only if collection is empty)
+                if (fetchedAddons.length === 0) {
+                    console.log("Coleção de complementos vazia, populando com dados iniciais...");
+                    for (const addon of initialAddons) {
+                        // Use setDoc to set the document with the specified ID
+                        await setDoc(doc(db, `artifacts/${appId}/public/data/addons`, addon.id), addon);
+                    }
+                }
+            }, (error) => {
+                console.error("Erro ao obter complementos em tempo real:", error);
+                showMessage("Erro ao carregar complementos.", true);
+            });
+
+            // Listener para Pedidos (Admin View)
+            const ordersColRef = collection(db, `artifacts/${appId}/public/data/orders`);
+            const qOrders = query(ordersColRef, orderBy("timestamp", "desc"));
+            onSnapshot(qOrders, (snapshot) => {
+                const fetchedOrders = [];
+                snapshot.forEach((docSnap) => {
+                    fetchedOrders.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                allAdminOrders = fetchedOrders; // Store all orders for finance calculations
+                console.log("Todos os pedidos para admin:", allAdminOrders);
+
+                if (currentView === 'admin') {
+                    if (currentAdminTab === 'orders') {
+                         displayOrders(allAdminOrders); // Update admin panel orders
+                    } else if (currentAdminTab === 'finance') {
+                        calculateDailyFinance(); // Recalculate finance if on finance tab
+                    }
+                }
+            }, (error) => {
+                console.error("Erro ao obter pedidos em tempo real (admin):", error);
+                showMessage("Erro ao carregar pedidos para o painel de administração.", true);
+            });
+
+            // Listener para Pedidos do Cliente (Ativos e Histórico)
+            if (userId) { // Ensure userId is available before setting up this listener
+                const customerOrdersCollectionRef = collection(db, `artifacts/${appId}/public/data/orders`);
+                const customerOrdersQuery = query(
+                    customerOrdersCollectionRef,
+                    where("userId", "==", userId)
+                );
+
+                onSnapshot(customerOrdersQuery, (snapshot) => {
+                    let allFetchedUserOrders = [];
+                    snapshot.forEach((docSnap) => {
+                        allFetchedUserOrders.push({ id: docSnap.id, ...docSnap.data() });
+                    });
+
+                    // Separar pedidos ativos e histórico
+                    let activeOrders = allFetchedUserOrders.filter(order => 
+                        order.status !== 'entregue' && order.status !== 'cancelado'
+                    );
+                    let historyOrders = allFetchedUserOrders.filter(order => 
+                        order.status === 'entregue' || order.status === 'cancelado'
+                    );
+
+                    // Detectar e notificar mudanças de status
+                    detectAndNotifyStatusChanges(activeOrders.concat(historyOrders), customerActiveOrders.concat(customerOrderHistory)); 
+
+                    // Classificar pedidos ativos (pendente, preparando, pronto)
+                    const activeStatusOrder = { 'pendente': 1, 'preparando': 2, 'pronto': 3 };
+                    activeOrders.sort((a, b) => {
+                        const statusCompare = (activeStatusOrder[a.status] || 99) - (activeStatusOrder[b.status] || 99);
+                        if (statusCompare !== 0) {
+                            return statusCompare;
+                        }
+                        const timestampA = a.timestamp ? a.timestamp.toDate() : new Date(0);
+                        const timestampB = b.timestamp ? b.timestamp.toDate() : new Date(0);
+                        return timestampB.getTime() - timestampA.getTime();
+                    });
+
+                    // Classificar pedidos do histórico (os mais recentes primeiro)
+                    historyOrders.sort((a, b) => {
+                        const timestampA = a.timestamp ? a.timestamp.toDate() : new Date(0);
+                        const timestampB = b.timestamp ? b.timestamp.toDate() : new Date(0);
+                        return timestampB.getTime() - timestampA.getTime();
+                    });
+
+                    customerActiveOrders = activeOrders; // Atualiza cache global de ativos
+                    customerOrderHistory = historyOrders; // Atualiza cache global de histórico
+
+                    if (currentView === 'customer') { // Somente atualiza se estiver na visão do cliente
+                        displayCustomerActiveOrders(customerActiveOrders);
+                        displayCustomerOrderHistory(customerOrderHistory); // NOVO
+                    }
+                }, (error) => {
+                    console.error("Erro ao obter pedidos do cliente:", error);
+                    // showMessage("Erro ao carregar seus pedidos.", true);
+                });
+            }
+
+            // New Listener: Contact Information
+            const contactInfoDocRef = doc(db, `artifacts/${appId}/public/data/settings/contactInfo`);
+            onSnapshot(contactInfoDocRef, async (docSnap) => {
+                if (docSnap.exists()) {
+                    contactInfoData = docSnap.data();
+                    console.log("Informações de contato atualizadas:", contactInfoData);
+                    // Update admin UI if currently on the contact tab
+                    if (currentView === 'admin' && currentAdminTab === 'contact') {
+                        renderAdminContactInfo();
+                    }
+                    // Update client modal
+                    updateContactInfoModal();
+                } else {
+                    console.log("Nenhuma informação de contato encontrada, criando valores padrão.");
+                    contactInfoData = {
+                        phone: '(67) 99969-7211',
+                        email: 'contato@lanchesdalucia.com',
+                        hours: 'Segunda a Sábado: 18:00 - 23:00\nDomingo: Fechado'
+                    };
+                    // Set initial data if document doesn't exist
+                    await setDoc(contactInfoDocRef, contactInfoData);
+                    // No need to call renderAdminContactInfo() or updateContactInfoModal() here,
+                    // as the next onSnapshot call will handle it when the document is created.
+                }
+            }, (error) => {
+                console.error("Erro ao obter informações de contato em tempo real:", error);
+                showMessage("Erro ao carregar informações de contato.", true);
+            });
+        }
+
+        // New: Function to detect and notify status changes
+        function detectAndNotifyStatusChanges(newOrders, oldOrders) {
+            // Flatten oldOrders for easier lookup if they were separated
+            const oldOrdersFlat = oldOrders; 
+            if (!oldOrdersFlat || oldOrdersFlat.length === 0) {
+                // If there are no old orders, this is likely the initial load, so don't notify
+                return;
+            }
+
+            newOrders.forEach(newOrder => {
+                const oldOrder = oldOrdersFlat.find(o => o.id === newOrder.id);
+                if (oldOrder && newOrder.status !== oldOrder.status) {
+                    let statusMessage = '';
+                    switch (newOrder.status) {
+                        case 'preparando':
+                            statusMessage = 'sendo preparado';
+                            break;
+                        case 'pronto':
+                            statusMessage = 'pronto para retirada/entrega';
+                            break;
+                        case 'entregue':
+                            statusMessage = 'entregue';
+                            break;
+                        case 'cancelado':
+                            statusMessage = 'cancelado';
+                            break;
+                        default:
+                            statusMessage = 'com status atualizado';
+                    }
+                    showMessage(`Seu pedido #${newOrder.id.substring(0, 8)} agora está: ${statusMessage}!`, false);
+                }
+            });
+        }
+
+
+        // Função para carregar e exibir os itens do menu (Visão do Cliente)
+        function loadMenuItems() {
+            menuSection.innerHTML = '<h2 class="col-span-full text-2xl font-semibold text-center mb-6">Nosso Cardápio</h2>';
+            if (menuItemsData.length === 0) {
+                menuSection.innerHTML += '<p class="col-span-full text-gray-500 text-center">Nenhum lanche disponível no momento.</p>';
+                return;
+            }
+            menuItemsData.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'menu-item p-4 flex flex-col items-center text-center';
+                itemDiv.innerHTML = `
+                    <img src="${item.imageUrl || 'https://placehold.co/400x250/FACC15/7C2D12?text=Sem+Imagem'}" alt="${item.name}" class="w-full h-40 object-cover rounded-lg mb-3 shadow-sm">
+                    <h3 class="text-xl font-bold mb-1 text-red-700">${item.name}</h3>
+                    <p class="text-gray-600 text-sm mb-3">${item.description}</p>
+                    <p class="text-2xl font-extrabold text-green-600 mb-4">R$ ${item.price.toFixed(2).replace('.', ',')}</p>
+                    <button data-id="${item.id}" class="add-to-cart-button bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-5 rounded-full shadow-md transition-all duration-300 transform hover:scale-105">
+                        <i class="ph-fill ph-info mr-2"></i>Ver Detalhes
+                    </button>
+                `;
+                menuSection.appendChild(itemDiv);
+            });
+
+            document.querySelectorAll('.add-to-cart-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const itemId = event.currentTarget.dataset.id;
+                    const selectedItem = menuItemsData.find(item => item.id === itemId); // Use menuItemsData
+                    if (selectedItem) {
+                        openCustomizationModal(selectedItem);
+                    }
+                });
+            });
+        }
+
+        // Função para exibir mensagens temporárias
+        function showMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = isError ? 'rgba(220, 38, 38, 0.8)' : 'rgba(16, 185, 129, 0.8)';
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000); // Esconde após 3 segundos
+        }
+
+        // Função para abrir o modal de personalização
+        function openCustomizationModal(item) {
+            currentCustomizingItem = item; // Armazena o item atual
+            customizeItemImage.src = item.imageUrl || 'https://placehold.co/400x250/FACC15/7C2D12?text=Sem+Imagem';
+            customizeItemName.textContent = item.name;
+            customizeItemDescription.textContent = item.description;
+            customizeItemBasePrice.textContent = `R$ ${item.price.toFixed(2).replace('.', ',')}`;
+            
+            // Set initial quantity for the main item
+            customizeItemQtyInput.value = 1; // Always start with 1 when opening for a new item
+
+            customizeAddonsDiv.innerHTML = ''; // Limpa complementos anteriores
+            globalAddonsData.forEach(addon => { // Use globalAddonsData
+                const addonDiv = document.createElement('div');
+                addonDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 mb-2'; // Adicionado mb-2 para espaçamento
+
+                if (quantityAddons.includes(addon.id)) {
+                    // Render quantity buttons and input
+                    addonDiv.innerHTML = `
+                        <div class="flex-1 min-w-0 pr-3">
+                            <span class="text-gray-800 font-medium truncate">${addon.name}</span>
+                        </div>
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                            <button type="button" data-addon-id="${addon.id}" data-action="decrease" class="addon-quantity-button bg-red-200 text-red-700 px-2 py-1 rounded-full hover:bg-red-300 transition-colors text-sm">
+                                <i class="ph-fill ph-minus text-xs"></i>
+                            </button>
+                            <input type="number" id="addon-qty-${addon.id}" data-addon-id="${addon.id}" value="0" min="0" class="addon-quantity-input w-10 text-center border rounded-md text-gray-800 font-semibold text-sm">
+                            <button type="button" data-addon-id="${addon.id}" data-action="increase" class="addon-quantity-button bg-green-200 text-green-700 px-2 py-1 rounded-full hover:bg-green-300 transition-colors text-sm">
+                                <i class="ph-fill ph-plus text-xs"></i>
+                            </button>
+                        </div>
+                        <span class="text-gray-700 font-semibold text-base ml-3 flex-shrink-0 text-right">R$ ${addon.price.toFixed(2).replace('.', ',')}</span>
+                    `;
+                } else if (checkboxAddons.includes(addon.id)) {
+                    // Render checkbox
+                    addonDiv.innerHTML = `
+                        <label for="addon-checkbox-${addon.id}" class="flex-1 min-w-0 pr-3 flex items-center cursor-pointer">
+                            <input type="checkbox" id="addon-checkbox-${addon.id}" data-addon-id="${addon.id}" class="addon-checkbox form-checkbox h-5 w-5 text-blue-600 rounded">
+                            <span class="ml-2 text-gray-800 font-medium truncate">${addon.name}</span>
+                        </label>
+                        <span class="text-gray-700 font-semibold text-base ml-3 flex-shrink-0 text-right">R$ ${addon.price.toFixed(2).replace('.', ',')}</span>
+                    `;
+                }
+                customizeAddonsDiv.appendChild(addonDiv);
+            });
+
+            customizeNotes.value = ''; // Limpa observações
+            updateCustomizeTotal(); // Calcula o total inicial
+
+            customizeModal.style.display = 'flex'; // Exibe o modal
+        }
+
+        // Função para calcular o total no modal de personalização
+        function updateCustomizeTotal() {
+            let mainItemQuantity = parseInt(customizeItemQtyInput.value);
+            let currentTotal = currentCustomizingItem.price * mainItemQuantity;
+            
+            // Calcula para complementos com quantidade
+            customizeAddonsDiv.querySelectorAll('.addon-quantity-input').forEach(input => {
+                const addonId = input.dataset.addonId;
+                const quantity = parseInt(input.value);
+                const addon = globalAddonsData.find(a => a.id === addonId);
+                if (addon && quantity > 0) {
+                    currentTotal += addon.price * quantity;
+                }
+            });
+
+            // Calcula para complementos com checkbox
+            customizeAddonsDiv.querySelectorAll('.addon-checkbox').forEach(checkbox => {
+                const addonId = checkbox.dataset.addonId;
+                if (checkbox.checked) {
+                    const addon = globalAddonsData.find(a => a.id === addonId);
+                    if (addon) {
+                        currentTotal += addon.price; // Adiciona o preço uma vez se marcado
+                    }
+                }
+            });
+
+            customizeCurrentTotalSpan.textContent = `R$ ${currentTotal.toFixed(2).replace('.', ',')}`;
+        }
+
+        // Event listener para o botão "Adicionar ao Carrinho" do modal de personalização
+        addToCartCustomizedButton.addEventListener('click', () => {
+            const selectedAddons = [];
+            
+            // Processa complementos com quantidade
+            customizeAddonsDiv.querySelectorAll('.addon-quantity-input').forEach(input => {
+                const addonId = input.dataset.addonId;
+                const quantity = parseInt(input.value);
+                if (quantity > 0) {
+                    const addon = globalAddonsData.find(a => a.id === addonId);
+                    if (addon) {
+                        selectedAddons.push({ ...addon, quantity: quantity }); // Store addon with its quantity
+                    }
+                }
+            });
+
+            // Processa complementos com checkbox
+            customizeAddonsDiv.querySelectorAll('.addon-checkbox').forEach(checkbox => {
+                const addonId = checkbox.dataset.addonId;
+                if (checkbox.checked) {
+                    const addon = globalAddonsData.find(a => a.id === addonId);
+                    if (addon) {
+                        selectedAddons.push({ ...addon, quantity: 1 }); // Quantity is always 1 for checkbox items
+                    }
+                }
+            });
+
+            const notes = customizeNotes.value.trim();
+            const mainItemQuantity = parseInt(customizeItemQtyInput.value);
+
+            addToCart({
+                ...currentCustomizingItem, // Copia todas as propriedades do item base
+                quantity: mainItemQuantity, // Adiciona a quantidade do lanche principal
+                selectedAddons: selectedAddons, // Now includes quantities
+                notes: notes,
+                // O preço final será calculado no momento da adição ao carrinho,
+                // já que `updateCustomizeTotal` já nos dá o valor correto.
+                price: parseFloat(customizeCurrentTotalSpan.textContent.replace('R$', '').replace(',', '.')) / mainItemQuantity // Recalcula o preço unitário personalizado
+            });
+
+            customizeModal.style.display = 'none'; // Fecha o modal de personalização
+        });
+
+
+        // Função para adicionar item ao carrinho (agora com personalizações)
+        function addToCart(item) {
+            // REMOVIDO: Lógica para agrupar itens. Agora, cada adição é um item único no carrinho.
+            cart.push({ ...item }); // Adiciona o item com a sua quantidade já definida
+            updateCartDisplay();
+            showMessage(`${item.name} adicionado ao carrinho!`);
+        }
+
+        // Função para atualizar a exibição do carrinho
+        function updateCartDisplay() {
+            cartItemsDiv.innerHTML = ''; // Limpa os itens atuais
+            let total = 0;
+
+            if (cart.length === 0) {
+                emptyCartMessage.style.display = 'block';
+                checkoutButton.disabled = true;
+                checkoutButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                emptyCartMessage.style.display = 'none';
+                checkoutButton.disabled = false;
+                checkoutButton.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                cart.forEach((item, index) => {
+                    const itemTotal = item.price * item.quantity;
+                    total += itemTotal;
+
+                    const cartItemDiv = document.createElement('div');
+                    cartItemDiv.className = 'flex items-start justify-between py-3 border-b border-gray-200 last:border-b-0';
+
+                    let addonsHtml = '';
+                    if (item.selectedAddons && item.selectedAddons.length > 0) {
+                        addonsHtml = '<p class="text-gray-500 text-xs mt-1">Add-ons: ' + item.selectedAddons.map(a => `${a.name} (${a.quantity})`).join(', ') + '</p>';
+                    }
+                    let notesHtml = '';
+                    if (item.notes) {
+                        notesHtml = `<p class="text-gray-500 text-xs italic mt-1">Obs: ${item.notes}</p>`;
+                    }
+
+                    // A exibição de "X" antes do nome do item é crucial aqui
+                    // para indicar que múltiplos do MESMO item personalizado podem existir
+                    cartItemDiv.innerHTML = `
+                        <div class="flex-grow">
+                            <p class="font-semibold text-lg">${item.name} <span class="text-sm text-gray-500">(x${item.quantity})</span></p>
+                            ${addonsHtml}
+                            ${notesHtml}
+                            <p class="text-gray-500 text-sm">Preço unitário: R$ ${item.price.toFixed(2).replace('.', ',')}</p>
+                            <p class="font-bold">Subtotal: R$ ${itemTotal.toFixed(2).replace('.', ',')}</p>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <button data-index="${index}" data-action="decrease" class="bg-red-200 text-red-700 px-2 py-1 rounded-full hover:bg-red-300 transition-colors">
+                                <i class="ph-fill ph-minus text-base"></i>
+                            </button>
+                            <span class="font-bold text-lg">${item.quantity}</span>
+                            <button data-index="${index}" data-action="increase" class="bg-green-200 text-green-700 px-2 py-1 rounded-full hover:bg-green-300 transition-colors">
+                                <i class="ph-fill ph-plus text-base"></i>
+                            </button>
+                            <button data-index="${index}" data-action="remove" class="bg-gray-200 text-gray-700 px-2 py-1 rounded-full ml-2 hover:bg-gray-300 transition-colors">
+                                <i class="ph-fill ph-trash text-base"></i>
+                            </button>
+                        </div>
+                    `;
+                    cartItemsDiv.appendChild(cartItemDiv);
+                });
+            }
+
+            cartTotalSpan.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            // A contagem total de itens no botão flutuante agora é a soma de todas as quantidades
+            cartItemCountSpan.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            // Adiciona listeners para os botões de quantidade e remoção no carrinho
+            // Estes listeners estão corretos aqui pois os itens do carrinho são recriados a cada update.
+            cartItemsDiv.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const itemIndex = parseInt(event.currentTarget.dataset.index); // Usar index agora
+                    const action = event.currentTarget.dataset.action;
+                    manageCartItem(itemIndex, action);
+                });
+            });
+        }
+
+        // Função para gerenciar itens no carrinho (aumentar, diminuir, remover)
+        function manageCartItem(itemIndex, action) {
+            if (itemIndex > -1 && itemIndex < cart.length) {
+                if (action === 'increase') {
+                    cart[itemIndex].quantity++;
+                } else if (action === 'decrease') {
+                    cart[itemIndex].quantity--;
+                    if (cart[itemIndex].quantity <= 0) { // Corrected access to item.quantity
+                        cart.splice(itemIndex, 1); // Remove se a quantidade for 0 ou menos
+                    }
+                } else if (action === 'remove') {
+                    cart.splice(itemIndex, 1);
+                }
+                updateCartDisplay();
+            }
+        }
+
+        // Event Listeners para os modais
+        cartButton.addEventListener('click', () => {
+            cartModal.style.display = 'flex'; // Exibe o modal do carrinho
+            updateCartDisplay(); // Atualiza a exibição sempre que o modal é aberto
+            // Garante que a informação do Pix esteja visível ou oculta corretamente ao abrir o carrinho
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+            pixInfoDiv.classList.toggle('hidden', selectedPaymentMethod !== 'pix');
+            pixReceiptUploadInput.value = ''; // Limpa o input de arquivo ao abrir
+            receiptUploadStatus.classList.add('hidden'); // Esconde o status
+            pixReceiptBase64 = null; // Reseta o comprovante Base64
+            
+            // Set default location method if none is selected (e.g., first time opening)
+            // If neither 'delivery' nor 'pickup' is checked, default to 'delivery'
+            if (!radioDelivery.checked && !radioPickup.checked) {
+                radioDelivery.checked = true;
+            }
+            updateLocationNotesVisibility(); // Ensure visibility is correct on open
+        });
+
+        closeCartModalButton.addEventListener('click', () => {
+            cartModal.style.display = 'none'; // Esconde o modal do carrinho
+            // Esconde e limpa a seção de localização ao fechar o carrinho
+            locationNotesInfoDiv.classList.add('hidden');
+            locationNotesInput.value = '';
+            radioDelivery.checked = true; // Default to delivery on close
+            // No need to uncheck radioPickup if radioDelivery is checked, as they are a group
+        });
+
+        closeCustomizeModalButton.addEventListener('click', () => {
+            customizeModal.style.display = 'none'; // Esconde o modal de personalização
+        });
+
+        // Event listener for closing the password modal (used when switching views)
+        closePasswordModalButton.addEventListener('click', () => {
+            passwordModal.style.display = 'none';
+            passwordErrorMessage.classList.add('hidden');
+            adminPasswordInput.value = '';
+        });
+
+        // Event listener for closing add/edit item modal
+        closeAddEditItemModalButton.addEventListener('click', () => {
+            addEditItemModal.style.display = 'none';
+            itemModalErrorMessage.classList.add('hidden');
+        });
+
+        // Event listener for closing add/edit addon modal
+        closeAddEditAddonModalButton.addEventListener('click', () => {
+            addEditAddonModal.style.display = 'none';
+            addonModalErrorMessage.classList.add('hidden');
+        });
+
+        // Event listener for closing contact info modal
+        closeContactModalButton.addEventListener('click', () => {
+            contactInfoModal.style.display = 'none';
+        });
+
+        // Fechar qualquer modal clicando fora do conteúdo
+        window.addEventListener('click', (event) => {
+            if (event.target === cartModal) {
+                cartModal.style.display = 'none';
+                // Esconde e limpa a seção de localização ao fechar o carrinho clicando fora
+                locationNotesInfoDiv.classList.add('hidden');
+                locationNotesInput.value = '';
+                radioDelivery.checked = true; // Default to delivery on close
+            }
+            if (event.target === customizeModal) {
+                customizeModal.style.display = 'none';
+            }
+            if (event.target === passwordModal) {
+                passwordModal.style.display = 'none';
+                passwordErrorMessage.classList.add('hidden');
+                adminPasswordInput.value = '';
+            }
+            if (event.target === addEditItemModal) {
+                addEditItemModal.style.display = 'none';
+                itemModalErrorMessage.classList.add('hidden');
+            }
+            if (event.target === addEditAddonModal) {
+                addEditAddonModal.style.display = 'none';
+                addonModalErrorMessage.classList.add('hidden');
+            }
+            if (event.target === contactInfoModal) {
+                contactInfoModal.style.display = 'none';
+            }
+        });
+
+        // Event listener para as opções de pagamento (Dinheiro/Pix)
+        paymentMethodRadios.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                if (event.target.value === 'pix') {
+                    pixInfoDiv.classList.remove('hidden');
+                } else {
+                    pixInfoDiv.classList.add('hidden');
+                    pixReceiptUploadInput.value = ''; // Limpa o input de arquivo
+                    receiptUploadStatus.classList.add('hidden'); // Esconde o status
+                    pixReceiptBase64 = null; // Reseta o comprovante Base64
+                }
+            });
+        });
+
+        // Event listener para o upload do comprovante Pix
+        pixReceiptUploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > 500 * 1024) { // Limite de 500KB (ajuste se necessário)
+                    receiptUploadStatus.textContent = "Erro: Arquivo muito grande (máx 500KB).";
+                    receiptUploadStatus.classList.remove('hidden', 'text-gray-600', 'text-green-600');
+                    receiptUploadStatus.classList.add('text-red-600');
+                    pixReceiptBase64 = null;
+                    return;
+                }
+
+                receiptUploadStatus.textContent = "Carregando comprovante...";
+                receiptUploadStatus.classList.remove('hidden', 'text-red-600', 'text-green-600');
+                receiptUploadStatus.classList.add('text-gray-600');
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    pixReceiptBase64 = e.target.result; // Armazena o Base64
+                    receiptUploadStatus.textContent = "Comprovante carregado com sucesso!";
+                    receiptUploadStatus.classList.remove('hidden', 'text-red-600', 'text-gray-600');
+                    receiptUploadStatus.classList.add('text-green-600');
+                };
+                reader.onerror = function() {
+                    receiptUploadStatus.textContent = "Erro ao ler o arquivo.";
+                    receiptUploadStatus.classList.remove('hidden', 'text-gray-600', 'text-green-600');
+                    receiptUploadStatus.classList.add('text-red-600');
+                    pixReceiptBase64 = null;
+                };
+                reader.readAsDataURL(file); // Converte para Base64
+            } else {
+                receiptUploadStatus.classList.add('hidden');
+                pixReceiptBase64 = null;
+            }
+        });
+
+        // Function to handle location radio button changes and update the notes input
+        function updateLocationNotesVisibility() {
+            const selectedLocationMethod = document.querySelector('input[name="locationMethod"]:checked')?.value;
+            
+            if (selectedLocationMethod === 'delivery') {
+                locationNotesInfoDiv.classList.remove('hidden');
+                locationNotesLabel.textContent = 'Detalhes do Local:';
+                locationNotesInput.placeholder = 'Ex: Rua X, nº Y, apto Z, referência';
+                // Pre-fill with saved address if available for delivery
+                locationNotesInput.value = customerAddress || '';
+            } else if (selectedLocationMethod === 'pickup') {
+                locationNotesInfoDiv.classList.remove('hidden'); // Still visible for any notes
+                locationNotesLabel.textContent = 'Observações para Retirada (opcional):';
+                locationNotesInput.placeholder = 'Ex: Chego em 15 minutos, pode deixar na recepção, etc.';
+                locationNotesInput.value = ''; // Clear for pickup, as saved address is irrelevant
+            } else {
+                locationNotesInfoDiv.classList.add('hidden'); // Should not happen with default checked
+                locationNotesInput.value = '';
+            }
+        }
+
+        // Event listener for location radio buttons
+        locationMethodRadios.forEach(radio => {
+            radio.addEventListener('change', updateLocationNotesVisibility);
+        });
+
+
+        // Função para finalizar o pedido (enviar para o Firestore)
+        checkoutButton.addEventListener('click', async () => {
+            if (!isAuthReady) {
+                showMessage("Aguardando autenticação. Por favor, tente novamente em alguns segundos.", true);
+                return;
+            }
+            if (cart.length === 0) {
+                showMessage("Seu carrinho está vazio!", true);
+                return;
+            }
+
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            const selectedLocationMethod = document.querySelector('input[name="locationMethod"]:checked')?.value;
+            let finalLocationNotes = null;
+
+            // Validação para Pix: se Pix for selecionado, deve ter um comprovante
+            if (selectedPaymentMethod === 'pix' && !pixReceiptBase64) {
+                 showMessage("Por favor, anexe o comprovante Pix ou envie para o WhatsApp.", true);
+                 return;
+            }
+
+            // Validação para localização (delivery)
+            if (selectedLocationMethod === 'delivery') {
+                finalLocationNotes = locationNotesInput.value.trim();
+                if (finalLocationNotes === '') {
+                    showMessage("Por favor, forneça detalhes sobre o local de entrega (Rua, Número, etc.).", true);
+                    return;
+                }
+            } else if (selectedLocationMethod === 'pickup') {
+                finalLocationNotes = locationNotesInput.value.trim() || 'Retirada na loja'; // If pickup, notes are optional
+            } else {
+                showMessage("Por favor, selecione onde você está (Entrega ou Retirada na Loja).", true);
+                return;
+            }
+
+
+            const order = {
+                userId: userId, // ID do usuário que fez o pedido
+                customerName: customerName, // Add customer name to the order
+                items: cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    basePrice: menuItemsData.find(mi => mi.id === item.id)?.price || item.price, // Preço base original, fallback if not found
+                    customizedPrice: item.price, // Preço com adicionais
+                    quantity: item.quantity, // Quantidade do item principal
+                    selectedAddons: item.selectedAddons.map(a => ({ id: a.id, name: a.name, price: a.price, quantity: a.quantity })), // Added quantity for addons
+                    notes: item.notes
+                })),
+                total: parseFloat(cartTotalSpan.textContent.replace('R$', '').replace(',', '.')),
+                timestamp: new Date(),
+                status: 'pendente', // Status inicial do pedido
+                paymentMethod: selectedPaymentMethod,
+                pixKey: selectedPaymentMethod === 'pix' ? PIX_KEY : null,
+                pixReceipt: selectedPaymentMethod === 'pix' ? pixReceiptBase64 : null, // Adiciona o comprovante Base64
+                location: {
+                    type: selectedLocationMethod, // Store selected method
+                    notes: finalLocationNotes
+                }
+            };
+
+            try {
+                // Adiciona o pedido à coleção 'orders' (pública)
+                // Usamos a coleção 'public/data/orders' para que a Lúcia possa ler todos os pedidos
+                const docRef = await addDoc(collection(db, `artifacts/${appId}/public/data/orders`), order);
+                console.log("Pedido enviado com ID: ", docRef.id);
+                showMessage("Seu pedido foi enviado com sucesso!", false);
+                cart = []; // Limpa o carrinho
+                updateCartDisplay(); // Atualiza a exibição do carrinho
+                cartModal.style.display = 'none'; // Fecha o modal do carrinho
+                pixReceiptUploadInput.value = ''; // Limpa o input de arquivo após o pedido
+                receiptUploadStatus.classList.add('hidden'); // Esconde o status
+                pixReceiptBase64 = null; // Reseta a variável do comprovante
+            } catch (e) {
+                console.error("Erro ao adicionar pedido: ", e);
+                showMessage("Erro ao enviar pedido. Tente novamente.", true);
+            }
+        });
+
+        // --- Funções e Lógica do Painel de Administração ---
+
+        // Função para exibir os pedidos no painel de administração
+        function displayOrders(orders) {
+            ordersListDiv.innerHTML = ''; // Limpa a lista atual
+            // Filter out 'entregue' and 'cancelado' orders for the active orders list
+            const activeAdminOrders = orders.filter(order => order.status !== 'entregue' && order.status !== 'cancelado');
+
+            if (activeAdminOrders.length === 0) {
+                noOrdersMessage.classList.remove('hidden');
+            } else {
+                noOrdersMessage.classList.add('hidden');
+                
+                activeAdminOrders.forEach(order => {
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'order-card mb-4 p-4 border border-gray-200 rounded-lg shadow-sm';
+
+                    const orderDate = order.timestamp ? new Date(order.timestamp.toDate()).toLocaleString('pt-BR') : 'Data Indisponível';
+                    const customerDisplayName = order.customerName || 'Cliente Anônimo'; // Display customer name
+
+                    let itemsHtml = order.items.map(item => {
+                        let addonDetails = '';
+                        if (item.selectedAddons && item.selectedAddons.length > 0) {
+                            addonDetails = `<p class="text-gray-500 text-xs ml-4">Add-ons: ${item.selectedAddons.map(a => `${a.name} (${a.quantity})`).join(', ')}</p>`;
+                        }
+                        return `
+                            <p class="text-gray-700 text-base">${item.quantity}x ${item.name} (R$ ${item.customizedPrice.toFixed(2).replace('.', ',')})</p>
+                            ${addonDetails}
+                            ${item.notes ? `<p class="text-gray-500 text-xs ml-4 italic">Obs: ${item.notes}</p>` : ''}
+                        `;
+                    }).join('');
+
+                    let pixReceiptHtml = '';
+                    if (order.paymentMethod === 'pix' && order.pixReceipt) {
+                        pixReceiptHtml = `
+                            <div class="mt-4 border-t pt-4 border-gray-200">
+                                <p class="font-semibold mb-2">Comprovante Pix:</p>
+                                <img src="${order.pixReceipt}" alt="Comprovante Pix" class="max-w-full h-auto rounded-lg shadow-md">
+                            </div>
+                        `;
+                    }
+
+                    let locationHtml = '';
+                    if (order.location && order.location.notes) {
+                        const locationTypeText = order.location.type === 'delivery' ? 'Entrega' : 'Retirada na Loja';
+                        locationHtml = `
+                            <p class="text-gray-600 mb-1"><strong>Tipo:</strong> ${locationTypeText}</p>
+                            <p class="text-gray-600 mb-1"><strong>Detalhes:</strong> ${order.location.notes}</p>
+                        `;
+                    }
+                    
+                    // Status display and action buttons
+                    let statusText = '';
+                    let actionButton = '';
+                    let statusClass = `status-${order.status || 'pendente'}`; // Default to pendente if status is missing
+
+                    switch (order.status) {
+                        case 'pendente':
+                            statusText = 'Pendente';
+                            actionButton = `<button data-id="${order.id}" data-action="preparando" class="update-status-button bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-full text-sm mt-3 mr-2">Confirmar Pedido</button>`;
+                            actionButton += `<button data-id="${order.id}" data-action="cancelado" class="update-status-button bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full text-sm mt-3">Cancelar Pedido</button>`;
+                            break;
+                        case 'preparando':
+                            statusText = 'Preparando';
+                            actionButton = `<button data-id="${order.id}" data-action="pronto" class="update-status-button bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full text-sm mt-3 mr-2">Marcar como Pronto</button>`;
+                            actionButton += `<button data-id="${order.id}" data-action="cancelado" class="update-status-button bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full text-sm mt-3">Cancelar Pedido</button>`;
+                            break;
+                        case 'pronto':
+                            statusText = 'Pronto para Entrega';
+                            actionButton = `<button data-id="${order.id}" data-action="entregue" class="update-status-button bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full text-sm mt-3 mr-2">Marcar como Entregue</button>`;
+                            actionButton += `<button data-id="${order.id}" data-action="cancelado" class="update-status-button bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full text-sm mt-3">Cancelar Pedido</button>`;
+                            break;
+                        case 'entregue':
+                            statusText = 'Entregue';
+                            actionButton = ''; // No more actions, maybe an archive button later
+                            break;
+                        case 'cancelado':
+                            statusText = 'Cancelado';
+                            actionButton = '';
+                            break;
+                        default:
+                            statusText = 'Desconhecido';
+                            actionButton = '';
+                    }
+
+
+                    orderCard.innerHTML = `
+                        <h3 class="text-xl font-bold text-blue-700 mb-2">Pedido #${order.id.substring(0, 8)} <span class="status-pill ${statusClass}">${statusText}</span></h3>
+                        <p class="text-gray-600 mb-1"><strong>Cliente:</strong> ${customerDisplayName} (ID: ${order.userId})</p>
+                        <p class="text-gray-600 mb-1"><strong>Data/Hora:</strong> ${orderDate}</p>
+                        <p class="gray-600 mb-1"><strong>Forma de Pagamento:</strong> <span class="font-bold uppercase">${order.paymentMethod}</span></p>
+                        ${locationHtml}
+                        <div class="mb-2">
+                            <p class="font-semibold text-lg mt-3">Itens:</p>
+                            ${itemsHtml}
+                        </div>
+                        <p class="text-xl font-bold text-green-700 mt-3">Total: R$ ${order.total.toFixed(2).replace('.', ',')}</p>
+                        ${pixReceiptHtml}
+                        <div class="mt-4 flex justify-end">
+                            ${actionButton}
+                        </div>
+                    `;
+                    ordersListDiv.appendChild(orderCard);
+                });
+
+                // Add event listeners for the status update buttons
+                document.querySelectorAll('.update-status-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const orderId = event.currentTarget.dataset.id;
+                        const newStatus = event.currentTarget.dataset.action;
+                        updateOrderStatus(orderId, newStatus);
+                    });
+                });
+            }
+        }
+
+        // New function: Update order status (Admin action)
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                const orderDocRef = doc(db, `artifacts/${appId}/public/data/orders`, orderId);
+                // Now, instead of deleting, we update the status to 'entregue' or 'cancelado'
+                await updateDoc(orderDocRef, { status: newStatus });
+                showMessage(`Pedido #${orderId.substring(0, 8)} atualizado para "${newStatus}".`, false);
+            } catch (error) {
+                console.error("Erro ao atualizar status do pedido:", error);
+                showMessage("Erro ao atualizar status do pedido. Tente novamente.", true);
+            }
+        }
+
+
+        // New function: Display customer's active orders (Client View)
+        function displayCustomerActiveOrders(orders) {
+            customerOrdersListDiv.innerHTML = ''; // Clear current list
+            if (orders.length === 0) {
+                noCustomerOrdersMessage.classList.remove('hidden');
+            } else {
+                noCustomerOrdersMessage.classList.add('hidden');
+                orders.forEach(order => {
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'order-card mb-4 p-4 border border-gray-200 rounded-lg shadow-sm';
+
+                    const orderDate = order.timestamp ? new Date(order.timestamp.toDate()).toLocaleString('pt-BR') : 'Data Indisponível';
+
+                    let itemsHtml = order.items.map(item => {
+                        let addonDetails = '';
+                        if (item.selectedAddons && item.selectedAddons.length > 0) {
+                            addonDetails = `<p class="text-gray-500 text-xs ml-4">Add-ons: ${item.selectedAddons.map(a => `${a.name} (${a.quantity})`).join(', ')}</p>`;
+                        }
+                        return `
+                            <p class="text-gray-700 text-base">${item.quantity}x ${item.name}</p>
+                            ${addonDetails}
+                            ${item.notes ? `<p class="text-gray-500 text-xs ml-4 italic">Obs: ${item.notes}</p>` : ''}
+                        `;
+                    }).join('');
+
+                    let statusText = '';
+                    let statusClass = `status-${order.status || 'pendente'}`;
+                    let cancelButtonHtml = '';
+
+                    // The cancel button is now always available
+                    cancelButtonHtml = `
+                        <button data-id="${order.id}" class="cancel-order-button bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full text-sm mt-3 ml-auto">
+                            <i class="ph-fill ph-x-circle mr-2"></i>Cancelar Pedido
+                        </button>
+                    `;
+
+                    switch (order.status) {
+                        case 'pendente':
+                            statusText = 'Aguardando Confirmação';
+                            break;
+                        case 'preparando':
+                            statusText = 'Sendo Preparado';
+                            break;
+                        case 'pronto':
+                            statusText = 'Pronto para Retirada/Entrega';
+                            break;
+                        default:
+                            statusText = 'Status Desconhecido';
+                    }
+
+                    let locationHtml = '';
+                    if (order.location && order.location.notes) {
+                        const locationTypeText = order.location.type === 'delivery' ? 'Entrega' : 'Retirada na Loja';
+                        locationHtml = `
+                            <p class="text-gray-600 mb-1"><strong>Tipo:</strong> ${locationTypeText}</p>
+                            <p class="text-gray-600 mb-1"><strong>Detalhes:</strong> ${order.location.notes}</p>
+                        `;
+                    }
+
+                    orderCard.innerHTML = `
+                        <h3 class="text-xl font-bold text-blue-700 mb-2">Seu Pedido #${order.id.substring(0, 8)}</h3>
+                        <p class="text-gray-600 mb-1"><strong>Data/Hora:</strong> ${orderDate}</p>
+                        <p class="text-gray-600 mb-1"><strong>Status:</strong> <span class="status-pill ${statusClass}">${statusText}</span></p>
+                        ${locationHtml}
+                        <div class="mb-2">
+                            <p class="font-semibold text-lg mt-3">Itens:</p>
+                            ${itemsHtml}
+                        </div>
+                        <p class="text-xl font-bold text-green-700 mt-3">Total: R$ ${order.total.toFixed(2).replace('.', ',')}</p>
+                        <div class="mt-4 flex justify-end">
+                            ${cancelButtonHtml}
+                        </div>
+                    `;
+                    customerOrdersListDiv.appendChild(orderCard);
+                });
+
+                // Add event listeners for the cancel order buttons
+                document.querySelectorAll('.cancel-order-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const orderId = event.currentTarget.dataset.id;
+                        cancelOrder(orderId);
+                    });
+                });
+            }
+        }
+
+        // New function: Display customer's order history (Client View)
+        function displayCustomerOrderHistory(orders) {
+            customerHistoryListDiv.innerHTML = ''; // Clear current list
+            if (orders.length === 0) {
+                noCustomerHistoryMessage.classList.remove('hidden');
+            } else {
+                noCustomerHistoryMessage.classList.add('hidden');
+                orders.forEach(order => {
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'order-card mb-4 p-4 border border-gray-200 rounded-lg shadow-sm';
+
+                    const orderDate = order.timestamp ? new Date(order.timestamp.toDate()).toLocaleString('pt-BR') : 'Data Indisponível';
+
+                    let itemsHtml = order.items.map(item => {
+                        let addonDetails = '';
+                        if (item.selectedAddons && item.selectedAddons.length > 0) {
+                            addonDetails = `<p class="text-gray-500 text-xs ml-4">Add-ons: ${item.selectedAddons.map(a => `${a.name} (${a.quantity})`).join(', ')}</p>`;
+                        }
+                        return `
+                            <p class="text-gray-700 text-base">${item.quantity}x ${item.name}</p>
+                            ${addonDetails}
+                            ${item.notes ? `<p class="text-gray-500 text-xs ml-4 italic">Obs: ${item.notes}</p>` : ''}
+                        `;
+                    }).join('');
+
+                    let statusText = '';
+                    let statusClass = `status-${order.status || 'entregue'}`; // Default to 'entregue' for history
+                    
+                    switch (order.status) {
+                        case 'entregue':
+                            statusText = 'Entregue';
+                            break;
+                        case 'cancelado':
+                            statusText = 'Cancelado';
+                            break;
+                        default:
+                            statusText = 'Finalizado'; // Fallback for any other completed status
+                    }
+
+                    let locationHtml = '';
+                    if (order.location && order.location.notes) {
+                        const locationTypeText = order.location.type === 'delivery' ? 'Entrega' : 'Retirada na Loja';
+                        locationHtml = `
+                            <p class="text-gray-600 mb-1"><strong>Tipo:</strong> ${locationTypeText}</p>
+                            <p class="text-gray-600 mb-1"><strong>Detalhes:</strong> ${order.location.notes}</p>
+                        `;
+                    }
+
+                    orderCard.innerHTML = `
+                        <h3 class="text-xl font-bold text-blue-700 mb-2">Pedido #${order.id.substring(0, 8)}</h3>
+                        <p class="text-gray-600 mb-1"><strong>Data/Hora:</strong> ${orderDate}</p>
+                        <p class="text-gray-600 mb-1"><strong>Status:</strong> <span class="status-pill ${statusClass}">${statusText}</span></p>
+                        ${locationHtml}
+                        <div class="mb-2">
+                            <p class="font-semibold text-lg mt-3">Itens:</p>
+                            ${itemsHtml}
+                        </div>
+                        <p class="text-xl font-bold text-green-700 mt-3">Total: R$ ${order.total.toFixed(2).replace('.', ',')}</p>
+                    `;
+                    customerHistoryListDiv.appendChild(orderCard);
+                });
+            }
+        }
+
+        // New function: Cancel order (Customer action) - now updates status instead of deleting
+        async function cancelOrder(orderId) {
+            // Replaced with a custom confirmation modal if needed, for now using browser confirm
+            if (confirm("Tem certeza que deseja cancelar este pedido?")) {
+                console.log("Attempting to cancel order with ID:", orderId);
+                console.log("Firebase DB instance:", db);
+                console.log("App ID:", appId);
+
+                try {
+                    if (!db) {
+                        console.error("Firestore DB not initialized!");
+                        showMessage("Erro: Banco de dados não inicializado. Tente novamente.", true);
+                        return;
+                    }
+                    if (!orderId) {
+                        console.error("Order ID is undefined or null!");
+                        showMessage("Erro: ID do pedido inválido.", true);
+                        return;
+                    }
+
+                    const orderDocRef = doc(db, `artifacts/${appId}/public/data/orders`, orderId);
+                    await updateDoc(orderDocRef, { status: 'cancelado' }); // Update status to 'cancelado'
+                    showMessage(`Pedido #${orderId.substring(0, 8)} cancelado com sucesso.`, false);
+                } catch (error) {
+                    console.error("Erro ao cancelar pedido:", error);
+                    if (error.code === 'permission-denied') {
+                        showMessage("Erro: Você não tem permissão para cancelar este pedido. Contate o proprietário ou verifique as regras de segurança.", true);
+                    } else if (error.code === 'not-found') {
+                        showMessage("Erro: Pedido não encontrado ou já foi cancelado.", true);
+                    } else {
+                        showMessage("Erro ao cancelar pedido. Tente novamente.", true);
+                    }
+                }
+            }
+        }
+
+
+        // --- Admin Menu Item Management Functions ---
+        function renderAdminMenuItems(items) {
+            adminMenuListDiv.innerHTML = '';
+            if (items.length === 0) {
+                noMenuItemsMessage.classList.remove('hidden');
+            } else {
+                noMenuItemsMessage.classList.add('hidden');
+                items.forEach(item => {
+                    const itemCard = document.createElement('div');
+                    itemCard.className = 'admin-item-card p-4 border border-gray-200 rounded-lg shadow-sm flex flex-col items-center text-center';
+                    itemCard.innerHTML = `
+                        <img src="${item.imageUrl || 'https://placehold.co/400x250/FACC15/7C2D12?text=Sem+Imagem'}" alt="${item.name}" class="w-full h-32 object-cover rounded-lg mb-3">
+                        <h4 class="text-lg font-bold mb-1">${item.name}</h4>
+                        <p class="text-gray-600 text-sm mb-2">${item.description}</p>
+                        <p class="text-md font-semibold text-green-600 mb-4">R$ ${item.price.toFixed(2).replace('.', ',')}</p>
+                        <div class="flex space-x-2">
+                            <button data-id="${item.id}" class="edit-menu-item-button bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full text-sm">
+                                <i class="ph-fill ph-pencil-simple-line"></i> Editar
+                            </button>
+                            <button data-id="${item.id}" class="delete-menu-item-button bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-full text-sm">
+                                <i class="ph-fill ph-trash"></i> Remover
+                            </button>
+                        </div>
+                    `;
+                    adminMenuListDiv.appendChild(itemCard);
+                });
+
+                document.querySelectorAll('.edit-menu-item-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const itemId = event.currentTarget.dataset.id;
+                        const itemToEdit = menuItemsData.find(item => item.id === itemId);
+                        if (itemToEdit) openAddEditItemModal(itemToEdit);
+                    });
+                });
+                document.querySelectorAll('.delete-menu-item-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const itemId = event.currentTarget.dataset.id;
+                        deleteMenuItem(itemId);
+                    });
+                });
+            }
+        }
+
+        addMenuButton.addEventListener('click', () => openAddEditItemModal());
+
+        async function openAddEditItemModal(item = null) {
+            itemModalErrorMessage.classList.add('hidden');
+            if (item) {
+                addEditItemTitle.textContent = `Editar Lanche: ${item.name}`;
+                editItemId.value = item.id;
+                itemNameInput.value = item.name;
+                itemDescriptionInput.value = item.description;
+                itemPriceInput.value = item.price;
+                itemImageUrlInput.value = item.imageUrl || '';
+            } else {
+                addEditItemTitle.textContent = 'Adicionar Novo Lanche';
+                editItemId.value = '';
+                itemNameInput.value = '';
+                itemDescriptionInput.value = '';
+                itemPriceInput.value = '';
+                itemImageUrlInput.value = '';
+            }
+            addEditItemModal.style.display = 'flex';
+        }
+
+        saveItemButton.addEventListener('click', async () => {
+            const id = editItemId.value;
+            const name = itemNameInput.value.trim();
+            const description = itemDescriptionInput.value.trim();
+            const price = parseFloat(itemPriceInput.value);
+            const imageUrl = itemImageUrlInput.value.trim();
+
+            if (!name || !description || isNaN(price) || price <= 0) {
+                itemModalErrorMessage.textContent = 'Por favor, preencha todos os campos obrigatórios (Nome, Descrição, Preço).';
+                itemModalErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const itemData = { name, description, price, imageUrl: imageUrl || 'https://placehold.co/400x250/FACC15/7C2D12?text=Sem+Imagem' };
+                if (id) {
+                    await setDoc(doc(db, `artifacts/${appId}/public/data/menuItems`, id), itemData);
+                    showMessage('Lanche atualizado com sucesso!', false);
+                } else {
+                    // Generate a new ID if it's a new item (Firestore will auto-generate)
+                    const newDocRef = await addDoc(collection(db, `artifacts/${appId}/public/data/menuItems`), itemData);
+                    showMessage('Lanche adicionado com sucesso!', false);
+                }
+                addEditItemModal.style.display = 'none';
+            } catch (error) {
+                console.error("Erro ao salvar lanche:", error);
+                itemModalErrorMessage.textContent = 'Erro ao salvar lanche. Tente novamente.';
+                itemModalErrorMessage.classList.remove('hidden');
+            }
+        });
+
+        async function deleteMenuItem(itemId) {
+            // Replaced with a custom confirmation modal if needed, for now using browser confirm
+            if (confirm("Tem certeza que deseja remover este lanche?")) {
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/menuItems`, itemId));
+                    showMessage('Lanche removido com sucesso!', false);
+                }
+                catch (error) {
+                    console.error("Erro ao remover lanche:", error);
+                    showMessage('Erro ao remover lanche. Tente novamente.', true);
+                }
+            }
+        }
+
+        // --- Admin Addon Management Functions ---
+        function renderAdminAddons(addons) {
+            adminAddonsListDiv.innerHTML = '';
+            if (addons.length === 0) {
+                noAddonsMessage.classList.remove('hidden');
+            } else {
+                noAddonsMessage.classList.add('hidden');
+                addons.forEach(addon => {
+                    const addonCard = document.createElement('div');
+                    addonCard.className = 'admin-item-card p-4 border border-gray-200 rounded-lg shadow-sm flex flex-col items-center text-center';
+                    addonCard.innerHTML = `
+                        <h4 class="text-lg font-bold mb-1">${addon.name}</h4>
+                        <p class="text-md font-semibold text-green-600 mb-4">R$ ${addon.price.toFixed(2).replace('.', ',')}</p>
+                        <div class="flex space-x-2">
+                            <button data-id="${addon.id}" class="edit-addon-button bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-full text-sm">
+                                <i class="ph-fill ph-pencil-simple-line"></i> Editar
+                            </button>
+                            <button data-id="${addon.id}" class="delete-addon-button bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-full text-sm">
+                                <i class="ph-fill ph-trash"></i> Remover
+                            </button>
+                        </div>
+                    `;
+                    adminAddonsListDiv.appendChild(addonCard);
+                });
+
+                document.querySelectorAll('.edit-addon-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const addonId = event.currentTarget.dataset.id;
+                        const addonToEdit = globalAddonsData.find(addon => addon.id === addonId);
+                        if (addonToEdit) openAddEditAddonModal(addonToEdit);
+                    });
+                });
+                document.querySelectorAll('.delete-addon-button').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const addonId = event.currentTarget.dataset.id;
+                        deleteAddon(addonId);
+                    });
+                });
+            }
+        }
+
+        addAddonButton.addEventListener('click', () => openAddEditAddonModal());
+
+        async function openAddEditAddonModal(addon = null) {
+            addonModalErrorMessage.classList.add('hidden');
+            if (addon) {
+                addEditAddonTitle.textContent = `Editar Complemento: ${addon.name}`;
+                editAddonId.value = addon.id;
+                addonNameInput.value = addon.name;
+                addonPriceInput.value = addon.price;
+            } else {
+                addEditAddonTitle.textContent = 'Adicionar Novo Complemento';
+                editAddonId.value = '';
+                addonNameInput.value = '';
+                addonPriceInput.value = '';
+            }
+            addEditAddonModal.style.display = 'flex';
+        }
+
+        saveAddonButton.addEventListener('click', async () => {
+            const id = editAddonId.value;
+            const name = addonNameInput.value.trim();
+            const price = parseFloat(addonPriceInput.value);
+
+            if (!name || isNaN(price) || price <= 0) {
+                addonModalErrorMessage.textContent = 'Por favor, preencha todos os campos obrigatórios (Nome, Preço).';
+                addonModalErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const addonData = { name, price };
+                if (id) {
+                    await setDoc(doc(db, `artifacts/${appId}/public/data/addons`, id), addonData);
+                    showMessage('Complemento atualizado com sucesso!', false);
+                } else {
+                    // Generate a new ID if it's a new addon (Firestore will auto-generate)
+                    const newDocRef = await addDoc(collection(db, `artifacts/${appId}/public/data/addons`), addonData);
+                    showMessage('Complemento adicionado com sucesso!', false);
+                }
+                addEditAddonModal.style.display = 'none';
+            }
+            catch (error) {
+                console.error("Erro ao salvar complemento:", error);
+                addonModalErrorMessage.textContent = 'Erro ao salvar complemento. Tente novamente.';
+                addonModalErrorMessage.classList.remove('hidden');
+            }
+        });
+
+        async function deleteAddon(addonId) {
+            // Replaced with a custom confirmation modal if needed, for now using browser confirm
+            if (confirm("Tem certeza que deseja remover este complemento?")) {
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/addons`, addonId));
+                    showMessage('Complemento removido com sucesso!', false);
+                } catch (error) {
+                    console.error("Erro ao remover complemento:", error);
+                    showMessage('Erro ao remover complemento. Tente novamente.', true);
+                }
+            }
+        }
+
+        // --- Admin Contact Info Management Functions ---
+        function renderAdminContactInfo() {
+            adminContactPhoneInput.value = contactInfoData.phone || '';
+            adminContactEmailInput.value = contactInfoData.email || '';
+            adminContactHoursInput.value = contactInfoData.hours || '';
+        }
+
+        saveContactInfoButton.addEventListener('click', async () => {
+            const phone = adminContactPhoneInput.value.trim();
+            const email = adminContactEmailInput.value.trim();
+            const hours = adminContactHoursInput.value.trim();
+
+            if (!phone || !email || !hours) {
+                contactInfoErrorMessage.textContent = 'Por favor, preencha todos os campos de contato.';
+                contactInfoErrorMessage.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const contactDocRef = doc(db, `artifacts/${appId}/public/data/settings/contactInfo`);
+                await setDoc(contactDocRef, { phone, email, hours }, { merge: true });
+                showMessage('Informações de contato salvas com sucesso!', false);
+                contactInfoErrorMessage.classList.add('hidden');
+            } catch (error) {
+                console.error("Erro ao salvar informações de contato:", error);
+                contactInfoErrorMessage.textContent = 'Erro ao salvar informações de contato. Tente novamente.';
+                contactInfoErrorMessage.classList.remove('hidden');
+            }
+        });
+
+        function updateContactInfoModal() {
+            displayContactPhone.textContent = contactInfoData.phone || 'N/A';
+            displayContactEmail.textContent = contactInfoData.email || 'N/A';
+            displayContactHours.textContent = contactInfoData.hours || 'N/A';
+            // Handle line breaks for hours if using textarea
+            displayContactHours.innerHTML = (contactInfoData.hours || 'N/A').replace(/\n/g, '<br>');
+        }
+
+
+        // --- Admin Tab Switching Logic ---
+        const adminTabButtons = document.querySelectorAll('.admin-tab-button');
+        const adminTabContents = document.querySelectorAll('.admin-tab-content');
+
+        function showAdminTab(tabName) {
+            // Hide all tab contents and deactivate all buttons
+            adminTabContents.forEach(content => content.classList.add('hidden'));
+            adminTabButtons.forEach(button => button.classList.remove('active'));
+
+            // Show the selected tab content and activate its button
+            if (tabName === 'orders') { // Now 'orders' is the default
+                adminOrdersTabContent.classList.remove('hidden');
+                tabOrderManagementButton.classList.add('active');
+                displayOrders(allAdminOrders); // Re-display all orders
+            } else if (tabName === 'menu') {
+                adminMenuManagementTabContent.classList.remove('hidden');
+                tabMenuManagementButton.classList.add('active');
+                renderAdminMenuItems(menuItemsData); // Re-render menu items
+                renderAdminAddons(globalAddonsData); // Re-render addons
+            } else if (tabName === 'finance') {
+                adminFinanceTabContent.classList.remove('hidden');
+                tabFinanceManagementButton.classList.add('active');
+                calculateDailyFinance(); // Re-calculate and display finance
+            } else if (tabName === 'contact') { // New contact tab
+                adminContactTabContent.classList.remove('hidden');
+                tabContactInfoManagementButton.classList.add('active');
+                renderAdminContactInfo(); // Render contact info in admin
+            }
+            currentAdminTab = tabName; // Update current active tab
+        }
+
+        // Add event listeners for admin tab buttons
+        tabMenuManagementButton.addEventListener('click', () => showAdminTab('menu'));
+        tabOrderManagementButton.addEventListener('click', () => showAdminTab('orders'));
+        tabFinanceManagementButton.addEventListener('click', () => showAdminTab('finance'));
+        tabContactInfoManagementButton.addEventListener('click', () => showAdminTab('contact')); // New listener
+
+
+        // --- Finance Section Logic ---
+        function calculateDailyFinance() {
+            let totalSnacks = 0;
+            let totalRevenue = 0;
+
+            // Get start and end of today in local timezone
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // Start of today
+            const startOfDay = now.getTime();
+
+            const endOfToday = new Date();
+            endOfToday.setHours(23, 59, 59, 999); // End of today
+            const endOfDay = endOfToday.getTime();
+
+            const todaysOrders = allAdminOrders.filter(order => {
+                // Ensure order.timestamp exists and is a Firestore Timestamp object
+                if (order.timestamp && typeof order.timestamp.toDate === 'function') {
+                    const orderTimestamp = order.timestamp.toDate().getTime(); // Convert Firestore Timestamp to JS Date and then to milliseconds
+                    // Only count delivered orders for finance
+                    return orderTimestamp >= startOfDay && orderTimestamp <= endOfDay && order.status === 'entregue';
+                }
+                return false; // Exclude orders without a valid timestamp
+            });
+            console.log("Pedidos de hoje para financeiro:", todaysOrders);
+
+            todaysOrders.forEach(order => {
+                totalRevenue += order.total;
+                order.items.forEach(item => {
+                    totalSnacks += item.quantity;
+                });
+            });
+
+            totalSnacksSoldSpan.textContent = totalSnacks;
+            dailyRevenueSpan.textContent = `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`;
+        }
+
+
+        // --- View Switching Logic (Client vs. Admin) ---
+        let isClientViewActive = true; // Tracks whether client view is currently active
+
+        toggleViewButton.addEventListener('click', () => {
+            if (isClientViewActive) { // Currently in client view, trying to go to admin
+                passwordModal.style.display = 'flex';
+                adminPasswordInput.value = '';
+                passwordErrorMessage.classList.add('hidden');
+                adminPasswordInput.focus();
+                cartButton.classList.add('hidden'); // Hide cart button when entering password modal for admin access
+            } else { // Currently in admin view, trying to go to client
+                clientView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                cartButton.classList.remove('hidden'); // Show cart button when returning to client view
+                toggleViewButton.textContent = 'Alternar para Visão do Proprietário';
+                isClientViewActive = true;
+                currentView = 'customer';
+                displayCustomerActiveOrders(customerActiveOrders); // Refresh customer orders
+                displayCustomerOrderHistory(customerOrderHistory); // Refresh customer order history
+            }
+        });
+
+        submitPasswordButton.addEventListener('click', () => {
+            const enteredPassword = adminPasswordInput.value;
+            if (enteredPassword === ADMIN_PASSWORD) {
+                passwordModal.style.display = 'none';
+                clientView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                cartButton.classList.add('hidden'); // Ensure cart button is hidden in admin view
+                toggleViewButton.textContent = 'Alternar para Visão do Cliente';
+                isClientViewActive = false;
+                currentView = 'admin';
+                passwordErrorMessage.classList.add('hidden');
+                toggleViewButton.classList.remove('hidden');
+                showAdminTab('orders'); // Now default to 'orders' tab
+            } else {
+                passwordErrorMessage.textContent = 'Senha incorreta! Tente novamente.';
+                passwordErrorMessage.classList.remove('hidden');
+                adminPasswordInput.value = '';
+                adminPasswordInput.focus();
+            }
+        });
+
+        adminPasswordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                submitPasswordButton.click();
+            }
+        });
+
+        // --- Initial Name Input / Owner Login Logic ---
+        customerNameInput.addEventListener('input', () => {
+            if (customerNameInput.value.trim() !== '' && customerAddressInput.value.trim() !== '') {
+                submitNameButton.disabled = false;
+                submitNameButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitNameButton.disabled = true;
+                submitNameButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            nameErrorMessage.classList.add('hidden');
+        });
+
+        customerAddressInput.addEventListener('input', () => {
+             if (customerNameInput.value.trim() !== '' && customerAddressInput.value.trim() !== '') {
+                submitNameButton.disabled = false;
+                submitNameButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitNameButton.disabled = true;
+                submitNameButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            nameErrorMessage.classList.add('hidden');
+        });
+
+
+        submitNameButton.addEventListener('click', async () => {
+            const name = customerNameInput.value.trim();
+            const address = customerAddressInput.value.trim();
+
+            if (name && address) {
+                customerName = name;
+                customerAddress = address;
+
+                // Save profile data to Firestore
+                try {
+                    const userProfileDocRef = doc(db, `artifacts/${appId}/users/${userId}/profile/userProfile`);
+                    await setDoc(userProfileDocRef, { name: customerName, address: customerAddress }, { merge: true });
+                    console.log("Perfil do usuário salvo/atualizado com sucesso.");
+                } catch (e) {
+                    console.error("Erro ao salvar perfil do usuário:", e);
+                    showMessage("Erro ao salvar seu perfil. Tente novamente.", true);
+                    return; // Stop if saving profile fails
+                }
+                
+                nameInputModal.style.display = 'none';
+                clientView.classList.remove('hidden');
+                loadMenuItems(); // Explicitly call loadMenuItems here to ensure initial render when client view activates
+                toggleViewButton.classList.remove('hidden');
+                currentView = 'customer';
+                isClientViewActive = true;
+                displayCustomerActiveOrders(customerActiveOrders); // Initial display of customer orders
+                displayCustomerOrderHistory(customerOrderHistory); // Initial display of customer order history
+            } else {
+                nameErrorMessage.textContent = 'Por favor, digite seu nome e endereço.';
+                nameErrorMessage.classList.remove('hidden');
+            }
+        });
+
+        customerNameInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' && !submitNameButton.disabled) {
+                submitNameButton.click();
+            }
+        });
+
+        ownerLoginButton.addEventListener('click', () => {
+            const enteredOwnerPassword = ownerPasswordInput.value;
+            if (enteredOwnerPassword === ADMIN_PASSWORD) {
+                nameInputModal.style.display = 'none';
+                clientView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                cartButton.classList.add('hidden'); // Ensure cart button is hidden in admin view after owner login
+                toggleViewButton.textContent = 'Alternar para Visão do Cliente';
+                toggleViewButton.classList.remove('hidden');
+                currentView = 'admin';
+                isClientViewActive = false;
+                ownerLoginErrorMessage.classList.add('hidden');
+                showAdminTab('orders'); // Now default to 'orders' tab
+            } else {
+                ownerLoginErrorMessage.textContent = 'Senha do proprietário incorreta!';
+                ownerLoginErrorMessage.classList.remove('hidden');
+                ownerPasswordInput.value = '';
+                ownerPasswordInput.focus();
+            }
+        });
+
+        ownerPasswordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                ownerLoginButton.click();
+            }
+        });
+
+        // --- Função para Toggler de Senha ---
+        function setupPasswordToggle(inputId, toggleButtonId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = document.getElementById(toggleButtonId);
+
+            if (passwordInput && toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    // Alterna o ícone
+                    const icon = toggleButton.querySelector('i');
+                    if (icon) {
+                        icon.classList.toggle('ph-eye');
+                        icon.classList.toggle('ph-eye-slash');
+                    }
+                });
+            }
+        }
+
+        setupPasswordToggle('owner-password-input', 'toggle-owner-password');
+        setupPasswordToggle('admin-password-input', 'toggle-admin-password');
+
+        // ******************************************************
+        // Correção de Bug: Event Listeners de Quantidade Repetidos
+        // Mover listeners para o escopo global para evitar adição repetida
+        // ******************************************************
+
+        // Listeners para controle de quantidade do item principal (no modal de personalização)
+        decreaseMainItemQtyButton.addEventListener('click', () => {
+            let currentQty = parseInt(customizeItemQtyInput.value);
+            if (currentQty > 1) { // Minimum quantity is 1 for the main item
+                currentQty--;
+                customizeItemQtyInput.value = currentQty;
+                updateCustomizeTotal();
+            }
+        });
+
+        increaseMainItemQtyButton.addEventListener('click', () => {
+            let currentQty = parseInt(customizeItemQtyInput.value);
+            currentQty++;
+            customizeItemQtyInput.value = currentQty;
+            updateCustomizeTotal();
+        });
+
+        customizeItemQtyInput.addEventListener('change', () => {
+            let currentQty = parseInt(customizeItemQtyInput.value);
+            if (currentQty < 1 || isNaN(currentQty)) {
+                customizeItemQtyInput.value = 1; // Ensure minimum 1
+            }
+            updateCustomizeTotal();
+        });
+
+        // Event delegation para os botões de quantidade dos complementos (addons)
+        customizeAddonsDiv.addEventListener('click', (event) => {
+            const button = event.target.closest('.addon-quantity-button');
+            if (button) {
+                const addonId = button.dataset.addonId;
+                const action = button.dataset.action;
+                const quantityInput = document.getElementById(`addon-qty-${addonId}`);
+                let currentQty = parseInt(quantityInput.value);
+
+                if (action === 'increase') {
+                    currentQty++;
+                } else if (action === 'decrease' && currentQty > 0) {
+                    currentQty--;
+                }
+                quantityInput.value = currentQty;
+                updateCustomizeTotal();
+            }
+        });
+
+        // Event delegation para o input de quantidade dos complementos (addons) E para os checkboxes
+        customizeAddonsDiv.addEventListener('change', (event) => {
+            const input = event.target.closest('.addon-quantity-input');
+            const checkbox = event.target.closest('.addon-checkbox');
+
+            if (input) {
+                // Ensure quantity is not negative
+                if (parseInt(input.value) < 0 || isNaN(parseInt(input.value))) {
+                    input.value = 0;
+                }
+                updateCustomizeTotal();
+            } else if (checkbox) {
+                updateCustomizeTotal();
+            }
+        });
+
+        // Event listener for Contact Info button
+        contactInfoButton.addEventListener('click', () => {
+            updateContactInfoModal(); // Ensure modal data is fresh before opening
+            contactInfoModal.style.display = 'flex';
+        });
+
+    </script>
+</body>
+</html>
